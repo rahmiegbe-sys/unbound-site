@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Checkout — UNBOUND</title>
+<link rel="stylesheet" href="style.css">
+<style>
+  .checkout{padding:70px 0 130px; position:relative; overflow:hidden;}
+  .checkout-hero{padding:50px 0 20px; position:relative;}
+  .checkout-hero .eyebrow{
+    display:flex; align-items:center; gap:10px; margin-bottom:18px;
+  }
+  .checkout-hero .eyebrow::before{content:''; width:26px; height:1px; background:var(--bone);}
+  .checkout-hero h1{font-size:clamp(2.4rem, 5.5vw, 4rem); margin-bottom:16px;}
+  .checkout-hero .tag-row{display:flex; gap:12px; flex-wrap:wrap;}
+
+  .checkout .wrap{position:relative; display:grid; grid-template-columns:1.1fr 0.9fr; gap:48px; align-items:start;}
+
+  .co-block{
+    position:relative;
+    border:1px solid var(--line); background:var(--ink-raised);
+    padding:30px 26px 26px; margin-bottom:22px;
+    transition:border-color var(--dur-hover) var(--ease-editorial);
+  }
+  .co-block:hover{border-color:var(--static);}
+  .co-block .sticker{position:absolute; top:-14px; left:20px;}
+
+  .field{display:flex; flex-direction:column; gap:6px; margin-bottom:16px; margin-top:6px;}
+  .field label{font-size:0.8rem; color:var(--bone-dim); transition:color var(--dur-hover) ease;}
+  .field input, .field select{
+    background:var(--ink); border:1px solid var(--line); color:var(--bone);
+    padding:12px 14px; font-family:'Space Grotesk',sans-serif; font-size:0.9rem;
+    transition:border-color var(--dur-hover) var(--ease-editorial), background-color var(--dur-hover) ease;
+  }
+  .field input:focus, .field select:focus{
+    outline:none; border-color:var(--bone); background:var(--ink-raised);
+  }
+  .field:focus-within label{color:var(--bone);}
+  .field-row{display:grid; grid-template-columns:1fr 1fr; gap:14px;}
+
+  .pay-options{display:flex; flex-direction:column; gap:10px; margin-top:6px;}
+  .pay-opt{
+    display:flex; align-items:center; gap:12px;
+    border:1px solid var(--line); padding:14px 16px; cursor:pointer;
+    font-size:0.88rem; font-weight:600; letter-spacing:0.01em;
+    transition:border-color var(--dur-hover) var(--ease-editorial), background-color var(--dur-hover) var(--ease-editorial);
+  }
+  .pay-opt:hover{border-color:var(--static);}
+  .pay-opt:has(input:checked){border-color:var(--bone); background:var(--ink);}
+  .pay-opt input{accent-color:var(--bone); width:16px; height:16px;}
+  .pay-detail{overflow:hidden;}
+
+  /* ticket-style bank details */
+  .ticket{
+    margin-top:16px; position:relative;
+    background:var(--ink);
+    padding:20px 18px;
+    clip-path:polygon(
+      0% 6px, 6px 0%, 94% 0%, 100% 6px,
+      100% calc(100% - 6px), calc(100% - 6px) 100%,
+      6px 100%, 0% calc(100% - 6px)
+    );
+    border:1px dashed var(--line);
+    font-size:0.85rem; color:var(--bone-dim); line-height:1.9;
+  }
+  .ticket .row{display:flex; justify-content:space-between; gap:12px; padding:5px 0; border-bottom:1px dotted var(--line);}
+  .ticket .row:last-of-type{border-bottom:none;}
+  .ticket .row b{color:var(--bone); font-family:'Space Grotesk',sans-serif; letter-spacing:0.02em;}
+  .ticket .row span:last-child{font-family:'IBM Plex Mono', monospace; color:var(--bone); letter-spacing:0.02em;}
+  .ticket .note{margin-top:12px; padding-top:12px; border-top:1px dashed var(--line);}
+  .ticket .note a{color:var(--bone); text-decoration:underline;}
+  .card-pending{
+    margin-top:16px; border:1px dashed var(--line); padding:16px;
+    font-size:0.85rem; color:var(--bone-dim); line-height:1.7;
+  }
+
+  .summary-line{display:flex; justify-content:space-between; font-size:0.9rem; padding:9px 0; border-bottom:1px solid var(--line);}
+  .summary-line.total{font-weight:700; font-size:1.1rem; border-bottom:none; padding-top:16px; font-family:'Big Shoulders Display',sans-serif; letter-spacing:0.01em;}
+  .co-empty{color:var(--static); padding:30px 0;}
+
+  #placeOrderBtn{transition:opacity var(--dur-btn) ease; width:100%; justify-content:center; margin-top:4px;}
+  #placeOrderBtn.loading{opacity:0.6; cursor:wait;}
+
+  .confirm-box{
+    display:none; position:relative; margin-top:22px;
+    border:2px solid var(--bone); padding:34px 26px; text-align:center;
+    opacity:0; transform:translateY(14px);
+    background:
+      radial-gradient(circle at 90% 10%, rgba(237,234,226,0.05), transparent 60%),
+      var(--ink-raised);
+  }
+  .confirm-box.show{display:block;}
+  .confirm-box .stamp{
+    display:inline-block; border:2px solid var(--bone); color:var(--bone);
+    padding:6px 16px; font-family:'Big Shoulders Display',sans-serif; font-weight:800;
+    font-size:1.5rem; letter-spacing:0.04em; text-transform:uppercase;
+    transform:rotate(-4deg); margin-bottom:16px;
+  }
+  .confirm-box p{color:var(--bone-dim); font-size:0.9rem; line-height:1.6; max-width:420px; margin:0 auto;}
+
+  @media (max-width:800px){ .checkout .wrap{grid-template-columns:1fr;} .field-row{grid-template-columns:1fr;} }
+
+  /* ---------- shipping module ---------- */
+  .ship-locate-copy{font-size:0.82rem; color:var(--bone-dim); line-height:1.6; max-width:520px; margin-top:6px;}
+  .ship-addr-row{display:flex; gap:12px; align-items:end; flex-wrap:wrap; margin-top:16px;}
+  .ship-addr-row .field input{width:100%;}
+  .ship-locate-btn{white-space:nowrap;}
+
+  .ship-suggestions{
+    position:absolute; top:100%; left:0; right:0; z-index:20;
+    background:var(--ink-raised); border:1px solid var(--line); border-top:none;
+    max-height:220px; overflow-y:auto;
+    display:none;
+  }
+  .ship-suggestions.show{display:block;}
+  .ship-suggestion{
+    padding:11px 14px; font-size:0.84rem; color:var(--bone-dim);
+    cursor:pointer; border-bottom:1px solid var(--line);
+    transition:background-color var(--dur-micro) ease, color var(--dur-micro) ease;
+  }
+  .ship-suggestion:last-child{border-bottom:none;}
+  .ship-suggestion:hover{background:var(--ink); color:var(--bone);}
+
+  .ship-confirm{margin-top:14px;}
+  .ship-confirm-q{font-size:0.9rem; color:var(--bone); margin:8px 0 12px;}
+  .ship-confirm-actions{display:flex; gap:12px; flex-wrap:wrap;}
+  .ship-confirm-actions .btn{padding:11px 20px; font-size:0.76rem;}
+
+  .ship-msg{font-size:0.85rem; color:var(--bone-dim); line-height:1.6; padding:12px 14px; border:1px solid var(--line);}
+  .ship-msg-warn{border-color:var(--static); color:var(--bone-dim);}
+  .ship-msg-ok{border:none; padding:0; color:var(--bone); font-weight:600; margin-bottom:10px;}
+
+  .ship-result{margin-top:14px; opacity:0; height:0; overflow:hidden;}
+  .ship-result.show{opacity:1; height:auto;}
+  .ship-result-card{border:1px solid var(--bone); padding:18px 20px;}
+  .ship-result-row{font-size:0.92rem; color:var(--bone-dim); padding:5px 0;}
+  .ship-result-row b{color:var(--bone);}
+  .ship-result-fee{color:var(--bone); font-weight:700; font-family:'IBM Plex Mono', monospace;}
+  .ship-final-note{margin-top:10px; padding-top:10px; border-top:1px dashed var(--line); font-size:0.76rem; color:var(--static);}
+
+  .ship-table-details{margin-top:26px; border-top:1px solid var(--line); padding-top:16px;}
+  .ship-table-details summary{
+    cursor:pointer; font-size:0.78rem; letter-spacing:0.06em; text-transform:uppercase;
+    color:var(--static); font-weight:600;
+  }
+  .ship-table-details summary:hover{color:var(--bone);}
+  .ship-table-wrap{margin-top:14px; overflow-x:auto;}
+  .ship-table{width:100%; border-collapse:collapse; font-size:0.85rem;}
+  .ship-table thead th{
+    text-align:left; font-size:0.68rem; letter-spacing:0.08em; text-transform:uppercase;
+    color:var(--static); font-weight:600; padding:10px 12px; border-bottom:1px solid var(--line);
+  }
+  .ship-table tbody th, .ship-table tbody td{
+    padding:12px; border-bottom:1px solid var(--line); vertical-align:top;
+    color:var(--bone-dim); font-weight:400; text-align:left;
+  }
+  .ship-table tbody th{color:var(--bone); font-weight:600; white-space:nowrap;}
+  .ship-table .ship-fee{color:var(--bone); font-family:'IBM Plex Mono', monospace; font-size:0.82rem; white-space:nowrap;}
+  .ship-table tbody tr{transition:background-color var(--dur-hover) ease;}
+  .ship-table tbody tr:hover{background:var(--ink);}
+  .ship-table tbody tr:last-child th, .ship-table tbody tr:last-child td{border-bottom:none;}
+
+  .ship-note{margin-top:18px; font-size:0.78rem; color:var(--static); line-height:1.6; max-width:520px;}
+
+  @media (max-width:640px){
+    .ship-addr-row{flex-direction:column; align-items:stretch;}
+    .ship-table thead{display:none;}
+    .ship-table, .ship-table tbody, .ship-table tr, .ship-table th, .ship-table td{display:block; width:100%;}
+    .ship-table tbody tr{border-bottom:1px solid var(--line); padding:14px 0;}
+    .ship-table tbody th, .ship-table tbody td{
+      border-bottom:none; padding:4px 0; display:flex; justify-content:space-between; gap:12px;
+    }
+    .ship-table tbody td::before, .ship-table tbody th::before{
+      content:attr(data-label); color:var(--static); font-size:0.68rem; letter-spacing:0.06em; text-transform:uppercase;
+      flex-shrink:0;
+    }
+    .ship-table tbody th::before{content:'';}
+  }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="wrap">
+    <a href="index.html" class="logo-mark"><img src="assets/logo.png" alt="Unbound"></a>
+    <div class="navlinks">
+      <a href="index.html">Home</a>
+      <a href="shop.html">Shop</a>
+      <a href="models.html">Models</a>
+      <a href="about.html">About</a>
+      <a href="contact.html">Contact</a>
+    </div>
+    <button class="cart-btn" onclick="ubOpenCart()">Cart <span class="cart-count">0</span></button>
+  </div>
+</nav>
+
+<div class="cart-overlay" id="cartOverlay" onclick="ubCloseCart()"></div>
+<div class="cart-drawer" id="cartDrawer">
+  <div class="cart-head">
+    <h3>Your Cart</h3>
+    <button class="cart-close" onclick="ubCloseCart()" aria-label="Close cart">&times;</button>
+  </div>
+  <div class="cart-items" id="cartItems"></div>
+  <div class="cart-foot" id="cartFoot">
+    <div class="cart-subtotal"><span>Subtotal</span><span id="cartSubtotal">₦0</span></div>
+    <p class="cart-note">Hoodie prices confirmed at checkout. Shipping calculated next step.</p>
+    <a href="checkout.html" class="btn btn-primary">Checkout</a>
+  </div>
+</div>
+
+<section class="checkout">
+  <div class="halftone-bg"></div>
+  <div class="wrap checkout-hero">
+    <div class="eyebrow">Step 3 of 3</div>
+    <h1>Checkout</h1>
+    <div class="tag-row">
+      <div class="sticker spin">Secure Order</div>
+      <div class="sticker outline">Lagos · Nigeria</div>
+    </div>
+  </div>
+
+  <div class="wrap">
+    <div>
+      <div class="co-block">
+        <div class="sticker">Delivery Details</div>
+        <div class="field">
+          <label for="fname">Full name</label>
+          <input id="fname" type="text" placeholder="Your name">
+        </div>
+        <div class="field-row">
+          <div class="field">
+            <label for="phone">Phone number</label>
+            <input id="phone" type="tel" placeholder="080...">
+          </div>
+          <div class="field">
+            <label for="email">Email</label>
+            <input id="email" type="email" placeholder="you@email.com">
+          </div>
+        </div>
+        <div class="field">
+          <label for="addr">Delivery address</label>
+          <input id="addr" type="text" placeholder="Street, city, state">
+        </div>
+      </div>
+
+      <div class="co-block">
+        <div class="sticker">Payment Method</div>
+        <div class="pay-options">
+          <label class="pay-opt"><input type="radio" name="pay" value="transfer" checked onchange="ubTogglePayDetail()"> Bank Transfer</label>
+          <label class="pay-opt"><input type="radio" name="pay" value="card" onchange="ubTogglePayDetail()"> Card (Paystack)</label>
+        </div>
+
+        <div id="transferDetail" class="pay-detail">
+          <div class="ticket">
+            <div class="row"><b>Bank</b><span>Moniepoint</span></div>
+            <div class="row"><b>Account Number</b><span>8080324504</span></div>
+            <div class="row"><b>Account Name</b><span>OLUWAJOMILOJU IGBEKELE OLANREWAJU</span></div>
+            <div class="note">Transfer the total shown, then send your receipt to <a href="tel:08080324504">0808 032 4504</a> to confirm your order.</div>
+          </div>
+        </div>
+
+        <div id="cardDetail" class="pay-detail" style="display:none;">
+          <div class="card-pending">
+            <strong style="color:var(--bone);">Secure card payment via Paystack.</strong><br>
+            You'll be redirected to Paystack's secure checkout to complete payment, then brought back here automatically.
+          </div>
+        </div>
+      </div>
+
+      <div class="co-block" id="shippingSection">
+        <!-- rendered by shipping.js -->
+      </div>
+
+      <button class="btn btn-primary" id="placeOrderBtn" onclick="ubPlaceOrder()">Place Order</button>
+
+      <div class="confirm-box" id="confirmBox">
+        <div class="stamp">Order Received</div>
+        <p>This is a demo checkout — no live payment has been charged yet. Once payment processing is connected, this is where your confirmation and order number will appear.</p>
+      </div>
+    </div>
+
+    <div>
+      <div class="co-block">
+        <div class="sticker">Order Summary</div>
+        <div id="summaryLines" style="margin-top:6px;"></div>
+        <div class="summary-line total"><span>Total</span><span id="summaryTotal">₦0</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <div class="bottom">
+      <span>© 2026 Unbound.</span>
+      <span>Freedom is to create.</span>
+    </div>
+  </div>
+</footer>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+<script src="config.js"></script>
+<script src="cart.js"></script>
+<script src="shipping.js"></script>
+<script>
+  const UB_GSAP = !!(window.gsap);
+
+  function ubTogglePayDetail(){
+    const isCard = document.querySelector('input[name="pay"]:checked').value === 'card';
+    const transfer = document.getElementById('transferDetail');
+    const card = document.getElementById('cardDetail');
+    const show = isCard ? card : transfer;
+    const hide = isCard ? transfer : card;
+
+    if(!UB_GSAP){
+      hide.style.display = 'none';
+      show.style.display = 'block';
+      return;
+    }
+    gsap.to(hide, {
+      autoAlpha:0, height:0, duration:0.3, ease:'power2.inOut',
+      onComplete:() => {
+        hide.style.display = 'none';
+        show.style.display = 'block';
+        gsap.fromTo(show, {autoAlpha:0, height:0}, {autoAlpha:1, height:'auto', duration:0.35, ease:'power2.out'});
+      }
+    });
+  }
+
+  function ubRenderSummary(){
+    const cart = ubGetCart();
+    const wrap = document.getElementById('summaryLines');
+    if(cart.length === 0){
+      wrap.innerHTML = '<div class="co-empty">Your cart is empty. <a href="shop.html" style="text-decoration:underline;">Go shop the drop</a>.</div>';
+    }else{
+      wrap.innerHTML = cart.map(i => `
+        <div class="summary-line">
+          <span>${i.name} × ${i.qty}</span>
+          <span>${i.price ? ubFormatNaira(i.price * i.qty) : 'TBD'}</span>
+        </div>
+      `).join('');
+    }
+    document.getElementById('summaryTotal').textContent = ubFormatNaira(ubCartSubtotal());
+
+    if(UB_GSAP){
+      const lines = wrap.querySelectorAll('.summary-line');
+      if(lines.length){
+        gsap.fromTo(lines, {opacity:0, x:-8}, {opacity:1, x:0, duration:0.4, ease:'power2.out', stagger:0.06});
+      }
+    }
+  }
+
+  function ubShowCheckoutError(msg){
+    let box = document.getElementById('checkoutError');
+    if(!box){
+      box = document.createElement('div');
+      box.id = 'checkoutError';
+      box.style.cssText = 'margin-top:14px; padding:12px 14px; border:1px solid var(--bone); font-size:0.85rem; color:var(--bone);';
+      document.getElementById('placeOrderBtn').insertAdjacentElement('afterend', box);
+    }
+    box.textContent = msg;
+  }
+
+  function ubClearCheckoutError(){
+    document.getElementById('checkoutError')?.remove();
+  }
+
+  async function ubPlaceOrder(){
+    ubClearCheckoutError();
+
+    const cart = ubGetCart();
+    if(cart.length === 0){
+      ubShowCheckoutError('Your cart is empty — add something from the shop first.');
+      return;
+    }
+
+    const name = document.getElementById('fname').value.trim();
+    const phone = document.getElementById('phone').value.trim();
+    const email = document.getElementById('email').value.trim();
+    const address = document.getElementById('addr').value.trim();
+    const paymentMethod = document.querySelector('input[name="pay"]:checked').value;
+
+    if(!name || !phone || !email || !address){
+      ubShowCheckoutError('Please fill in your name, phone, email, and delivery address.');
+      return;
+    }
+    if(!window.ubSelectedShipping){
+      ubShowCheckoutError('Please check your delivery fee above before placing your order.');
+      return;
+    }
+
+    const btn = document.getElementById('placeOrderBtn');
+    const originalText = btn.textContent;
+    btn.classList.add('loading');
+    btn.disabled = true;
+    btn.textContent = 'Processing...';
+
+    try{
+      const res = await fetch(`${UB_API_BASE}/api/checkout/initialize`, {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({
+          customer: {name, email, phone},
+          deliveryAddress: address,
+          deliveryZoneId: window.ubSelectedShipping.zoneId,
+          items: cart.map(i => ({productId: i.id, qty: i.qty})),
+          paymentMethod,
+        }),
+      });
+      const data = await res.json();
+
+      if(!res.ok){
+        throw new Error(data.error || 'Something went wrong. Please try again.');
+      }
+
+      if(data.paymentMethod === 'card' && data.authorizationUrl){
+        // Hand off to Paystack's hosted checkout. Payment is verified
+        // server-side once the customer returns to success.html.
+        window.location.href = data.authorizationUrl;
+        return;
+      }
+
+      // Bank transfer path: order is saved, show the existing stamp confirmation.
+      const box = document.getElementById('confirmBox');
+      box.querySelector('p').textContent = `Order ${data.reference} received. Transfer the total shown above, then send your receipt to 0808 032 4504 to confirm. You'll get a message once it's confirmed.`;
+      box.classList.add('show');
+      if(UB_GSAP){
+        gsap.fromTo(box, {opacity:0, y:14}, {opacity:1, y:0, duration:0.5, ease:'power3.out'});
+      }else{
+        box.style.opacity = '1';
+        box.style.transform = 'translateY(0)';
+      }
+      box.scrollIntoView({behavior:'smooth', block:'center'});
+    }catch(err){
+      ubShowCheckoutError(err.message || 'Could not place your order. Please try again.');
+    }finally{
+      btn.classList.remove('loading');
+      btn.disabled = false;
+      btn.textContent = originalText;
+    }
+  }
+
+  document.addEventListener('DOMContentLoaded', ubRenderSummary);
+</script>
+</body>
+</html>

@@ -1,0 +1,601 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>UNBOUND — Freedom Is To Create</title>
+<link rel="stylesheet" href="style.css">
+<style>
+  /* ---------- hero ---------- */
+  .hero{
+    position:relative;
+    padding:64px 0 0;
+    overflow:hidden;
+    min-height:92vh;
+    display:flex; align-items:center;
+  }
+  .hero .wrap{
+    position:relative;
+    display:grid; grid-template-columns:1.15fr 0.85fr;
+    gap:20px; align-items:center;
+    width:100%;
+  }
+  .hero-copy{position:relative; z-index:3;}
+  .hero-copy .eyebrow{
+    display:flex; align-items:center; gap:10px;
+    margin-bottom:26px;
+  }
+  .hero-copy .eyebrow::before{content:''; width:26px; height:1px; background:var(--bone);}
+  .hero-copy h1{
+    position:relative;
+    font-size:clamp(3.6rem, 9vw, 8.2rem);
+    color:var(--bone);
+  }
+  .hero-copy h1 .ln{display:block; position:relative;}
+  .hero-copy h1 .ln.push{margin-left:6%;}
+  .hero-copy h1 .out{
+    -webkit-text-stroke:2px var(--bone); color:transparent;
+  }
+  .hero-copy p.lede{
+    margin-top:30px; max-width:400px;
+    font-size:1.05rem; line-height:1.65; color:var(--bone-dim);
+  }
+  .hero-ctas{display:flex; gap:16px; margin-top:36px; flex-wrap:wrap; align-items:center;}
+  .hero-tag{margin-top:40px; display:flex; gap:12px; flex-wrap:wrap;}
+
+  .hero-visual{
+    position:relative; display:flex; align-items:center; justify-content:center;
+    height:100%;
+    z-index:2;
+  }
+  .hero-visual .frame{
+    position:relative;
+    max-width:420px;
+    transform:rotate(-3deg);
+    filter:drop-shadow(0 40px 70px rgba(0,0,0,0.7));
+    transition:transform 0.4s ease;
+  }
+  .hero-visual .frame:hover{transform:rotate(0deg) scale(1.03);}
+  .hero-visual .frame img{
+    background:var(--ink-raised);
+    filter:contrast(1.08) saturate(0.85);
+  }
+  .hero-visual .ring{
+    position:absolute; z-index:-1;
+    border:1px solid var(--line); border-radius:50%;
+  }
+  .hero-visual .ring.r1{width:480px; height:480px;}
+  .hero-visual .ring.r2{width:380px; height:380px; border-style:dashed;}
+  .corner-tag{
+    position:absolute; top:-22px; right:-20px;
+    transform:rotate(8deg);
+    z-index:5;
+  }
+  .bottom-tag{
+    position:absolute; bottom:-16px; left:-30px;
+    transform:rotate(-6deg);
+    z-index:5;
+  }
+  @media (max-width:400px){ .corner-tag, .bottom-tag{display:none;} }
+
+  /* giant background wordmark, bleeding off edge */
+  .bg-word{
+    position:absolute; z-index:0; top:6%; right:-6%;
+    font-size:clamp(9rem, 22vw, 20rem);
+    font-family:'Big Shoulders Display', sans-serif; font-weight:800;
+    color:transparent; -webkit-text-stroke:1.5px rgba(237,234,226,0.08);
+    line-height:0.8; pointer-events:none; user-select:none;
+    transform:rotate(-4deg);
+  }
+
+  /* ---------- hazard divider ---------- */
+  .hazard-strip{position:relative;}
+
+  /* ---------- ticker (replaces plain marquee) ---------- */
+  .marquee{
+    background:var(--ink-raised);
+    color:var(--bone);
+    overflow:hidden; white-space:nowrap;
+    padding:16px 0;
+    border-top:1px solid var(--line);
+    border-bottom:1px solid var(--line);
+  }
+  .marquee div{
+    display:inline-block;
+    font-family:'Big Shoulders Display', sans-serif;
+    font-size:1.3rem; letter-spacing:0.02em; text-transform:uppercase; font-weight:700;
+    animation:scroll 22s linear infinite;
+  }
+  .marquee span{margin:0 30px; color:var(--static); font-family:'Space Grotesk',sans-serif; font-size:0.9rem; vertical-align:middle;}
+  @keyframes scroll{ from{transform:translateX(0);} to{transform:translateX(-50%);} }
+  @media (prefers-reduced-motion: reduce){ .marquee div{animation:none;} }
+
+  /* ---------- drop / featured product ---------- */
+  .drop{padding:150px 0; position:relative;}
+  .section-head{
+    display:flex; justify-content:space-between; align-items:flex-end;
+    margin-bottom:56px; gap:24px; flex-wrap:wrap;
+  }
+  .section-head h2{font-size:clamp(2.4rem, 5vw, 4rem);}
+  .section-head p{max-width:340px; color:var(--bone-dim); font-size:0.92rem; line-height:1.6;}
+
+  .drop-grid{
+    display:grid; grid-template-columns:1fr 1fr; gap:0;
+    border:1px solid var(--line);
+    position:relative;
+  }
+  .drop-shot{
+    background:var(--ink-raised);
+    padding:36px;
+    display:flex; align-items:center; justify-content:center;
+    border-right:1px solid var(--line);
+  }
+  .drop-shot img{max-width:100%;}
+  .drop-info{padding:44px;}
+  .drop-info .kicker{
+    display:flex; gap:10px; align-items:center; margin-bottom:18px;
+  }
+  .drop-info h3{font-size:2rem; margin-bottom:10px;}
+  .drop-info .price{
+    font-size:1.1rem; color:var(--red); font-weight:600; margin-bottom:20px;
+  }
+  .drop-info p.desc{color:var(--bone-dim); line-height:1.7; font-size:0.95rem; margin-bottom:26px; max-width:420px;}
+  .drop-specs{
+    list-style:none; font-size:0.82rem; color:var(--bone-dim);
+    display:flex; flex-direction:column; gap:9px; margin-bottom:30px;
+    border-top:1px solid var(--line); padding-top:18px; max-width:420px;
+  }
+  .drop-specs li{display:flex; justify-content:space-between;}
+  .drop-specs b{color:var(--bone); font-weight:600;}
+  @media (max-width:760px){
+    .drop-grid{grid-template-columns:1fr;}
+    .drop-shot{border-right:none; border-bottom:1px solid var(--line);}
+  }
+
+  /* ---------- manifesto ---------- */
+  .manifesto{
+    padding:130px 0;
+    background:var(--ink-raised);
+    border-top:1px solid var(--line); border-bottom:1px solid var(--line);
+    text-align:center;
+    position:relative; overflow:hidden;
+  }
+  .manifesto::before{
+    content:'UNBOUND'; position:absolute; top:-6%; left:50%; transform:translateX(-50%) rotate(-3deg);
+    font-family:'Big Shoulders Display', sans-serif; font-weight:800;
+    font-size:clamp(6rem, 16vw, 13rem);
+    color:transparent; -webkit-text-stroke:1px rgba(237,234,226,0.05);
+    white-space:nowrap; pointer-events:none;
+  }
+  .manifesto blockquote{
+    position:relative; z-index:2;
+    font-family:'Big Shoulders Display', sans-serif; font-weight:700;
+    font-size:clamp(2.1rem, 5.2vw, 3.8rem);
+    text-transform:uppercase;
+    max-width:920px; margin:0 auto 24px; line-height:1.02;
+  }
+  .manifesto blockquote em{
+    font-style:normal; position:relative; display:inline-block;
+  }
+  .manifesto blockquote em::after{
+    content:''; position:absolute; left:-2%; right:-2%; bottom:2px; height:10px;
+    background:var(--bone); opacity:0.9; z-index:-1;
+    clip-path:polygon(0% 30%, 100% 0%, 100% 100%, 0% 70%);
+  }
+  .manifesto blockquote em{color:var(--ink);}
+  .manifesto p{position:relative; z-index:2; color:var(--static); font-size:0.85rem; letter-spacing:0.06em; text-transform:uppercase; margin-top:18px;}
+
+  /* ---------- new drop: shorts ---------- */
+  .new-drop{padding:130px 0; position:relative;}
+  .new-drop-grid{
+    display:grid; grid-template-columns:1fr 1fr; gap:0;
+    border:1px solid var(--line);
+  }
+  .new-drop-shot{
+    background:var(--ink-raised); padding:36px;
+    display:flex; align-items:center; justify-content:center;
+    border-right:1px solid var(--line);
+  }
+  .new-drop-info{padding:44px;}
+  .new-drop-info h3{font-size:2rem; margin-bottom:10px;}
+  .new-drop-info .tagline{font-size:1.05rem; color:var(--bone-dim); line-height:1.7; margin-bottom:26px; max-width:440px;}
+  .colorway-label{font-size:0.7rem; letter-spacing:0.08em; text-transform:uppercase; color:var(--static); margin-bottom:12px;}
+  .colorway-swatches{display:flex; gap:12px; margin-bottom:28px; flex-wrap:wrap;}
+  .colorway-swatches button{
+    width:38px; height:38px; border-radius:50%; cursor:pointer;
+    border:2px solid var(--line); position:relative;
+    transition:border-color var(--dur-hover) ease, transform var(--dur-hover) ease;
+  }
+  .colorway-swatches button:hover{transform:translateY(-3px);}
+  .colorway-swatches button.active{border-color:var(--bone);}
+  .colorway-swatches button::after{
+    content:attr(data-name);
+    position:absolute; top:120%; left:50%; transform:translateX(-50%);
+    font-size:0.62rem; letter-spacing:0.03em; text-transform:uppercase; color:var(--static);
+    white-space:nowrap; opacity:0; transition:opacity var(--dur-micro) ease;
+  }
+  .colorway-swatches button:hover::after{opacity:1;}
+  .sw-white{background:#EDEAE2;} .sw-cream{background:#E4D9C4;} .sw-green{background:#4C5D45;}
+  .sw-blue{background:#3C4A5C;} .sw-black{background:#1A1815;}
+  @media (max-width:760px){
+    .new-drop-grid{grid-template-columns:1fr;}
+    .new-drop-shot{border-right:none; border-bottom:1px solid var(--line);}
+  }
+
+  /* ---------- cta ---------- */
+  .cta-band{padding:100px 0; text-align:center;}
+  .cta-band h2{font-size:clamp(2rem, 4.6vw, 3.2rem); margin-bottom:18px;}
+  .cta-band p{color:var(--bone-dim); margin-bottom:32px; font-size:1.02rem;}
+</style>
+<svg width="0" height="0" style="position:absolute">
+  <filter id="spraydisplace">
+    <feTurbulence type="fractalNoise" baseFrequency="0.012" numOctaves="2" seed="4" result="n"/>
+    <feDisplacementMap in="SourceGraphic" in2="n" scale="6"/>
+  </filter>
+  <filter id="roughEdge">
+    <feTurbulence type="fractalNoise" baseFrequency="0.06" numOctaves="3" seed="9" result="n"/>
+    <feDisplacementMap in="SourceGraphic" in2="n" scale="10"/>
+  </filter>
+  <filter id="sprayGrain">
+    <feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="2" seed="2" result="n"/>
+    <feColorMatrix in="n" type="matrix" values="0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 0.4 0"/>
+    <feComposite operator="in" in2="SourceGraphic"/>
+  </filter>
+</svg>
+
+<style>
+  .graffiti-layer{position:absolute; inset:0; z-index:1; pointer-events:none; overflow:visible;}
+  .graffiti-layer svg{width:100%; height:100%; overflow:visible;}
+
+  /* ---------- graffiti entrance animations ---------- */
+  @keyframes dripGrow{
+    0%{ transform:scaleY(0); opacity:0; }
+    40%{ opacity:1; }
+    100%{ transform:scaleY(1); opacity:1; }
+  }
+  .drip-svg path{
+    transform-origin:top;
+    animation:dripGrow 0.9s cubic-bezier(.34,1.4,.64,1) both;
+  }
+  .drip-svg path:nth-child(1){animation-delay:0.9s;}
+  .drip-svg path:nth-child(2){animation-delay:1.05s;}
+  .drip-svg path:nth-child(3){animation-delay:1.15s;}
+  .drip-svg path:nth-child(4){animation-delay:1.3s;}
+  .drip-svg path:nth-child(5){animation-delay:1.45s;}
+  .drip-svg path:nth-child(6){animation-delay:1.6s;}
+
+  @keyframes sprayPop{
+    0%{ transform:scale(0); opacity:0; }
+    55%{ transform:scale(1.15); opacity:1; }
+    100%{ transform:scale(1); opacity:1; }
+  }
+  .graffiti-layer g{
+    transform-box:fill-box; transform-origin:center;
+    animation:sprayPop 0.6s cubic-bezier(.3,1.6,.5,1) both;
+  }
+  .graffiti-layer g:nth-of-type(1){animation-delay:0.15s;}
+  .graffiti-layer g:nth-of-type(2){animation-delay:0.85s;}
+  .graffiti-layer g:nth-of-type(3){animation-delay:1.75s;}
+  .graffiti-layer g:nth-of-type(5){animation-delay:2.05s;}
+
+  .tag-scrawl{
+    stroke-dasharray:900;
+    stroke-dashoffset:900;
+    animation:tagDraw 1.8s 1.75s cubic-bezier(.65,0,.35,1) forwards;
+  }
+  @keyframes tagDraw{ to{ stroke-dashoffset:0; } }
+
+  .scratch-underline{
+    stroke-dasharray:400;
+    stroke-dashoffset:400;
+    animation:tagDraw 0.8s 2.2s ease-out forwards;
+  }
+
+  @keyframes stickerWiggle{
+    0%,100%{ transform:rotate(-5deg); }
+    50%{ transform:rotate(2deg) scale(1.04); }
+  }
+  .sticker.spin:hover{ animation:stickerWiggle 0.5s ease-in-out; }
+  .sticker.outline{ transition:transform 0.25s ease; }
+  .sticker.outline:hover{ transform:translateY(-3px) rotate(-2deg); }
+
+  .hero-visual .frame{
+    transition:transform 0.15s ease-out;
+    will-change:transform;
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    .drip-svg path, .graffiti-layer g, .tag-scrawl, .scratch-underline{
+      animation:none !important; stroke-dashoffset:0 !important; opacity:1 !important; transform:none !important;
+    }
+  }
+</style>
+</head>
+<body>
+
+<div class="corner-logo"><img src="assets/logo.png" alt="Unbound logo"></div>
+<div class="corner-badge">UNBOUND</div>
+
+<nav>
+  <div class="wrap">
+    <a href="index.html" class="logo-mark"><img src="assets/logo.png" alt="Unbound"></a>
+    <div class="navlinks">
+      <a href="index.html" class="active">Home</a>
+      <a href="shop.html">Shop</a>
+      <a href="models.html">Models</a>
+      <a href="about.html">About</a>
+      <a href="contact.html">Contact</a>
+    </div>
+    <button class="cart-btn" onclick="ubOpenCart()">Cart <span class="cart-count">0</span></button>
+  </div>
+</nav>
+
+<div class="cart-overlay" id="cartOverlay" onclick="ubCloseCart()"></div>
+<div class="cart-drawer" id="cartDrawer">
+  <div class="cart-head">
+    <h3>Your Cart</h3>
+    <button class="cart-close" onclick="ubCloseCart()" aria-label="Close cart">&times;</button>
+  </div>
+  <div class="cart-items" id="cartItems"></div>
+  <div class="cart-foot" id="cartFoot">
+    <div class="cart-subtotal"><span>Subtotal</span><span id="cartSubtotal">₦0</span></div>
+    <p class="cart-note">Hoodie prices confirmed at checkout. Shipping calculated next step.</p>
+    <a href="checkout.html" class="btn btn-primary">Checkout</a>
+  </div>
+</div>
+
+<section class="hero">
+  <div class="halftone-bg"></div>
+  <div class="bg-word" aria-hidden="true">UNBD</div>
+
+  <div class="graffiti-layer" aria-hidden="true">
+    <svg viewBox="0 0 1200 800" preserveAspectRatio="xMidYMid slice">
+      <!-- spray splatter cluster, top left -->
+      <g filter="url(#roughEdge)" opacity="0.55">
+        <circle cx="90" cy="90" r="46" fill="var(--bone)"/>
+        <circle cx="150" cy="60" r="14" fill="var(--bone)"/>
+        <circle cx="175" cy="105" r="8" fill="var(--bone)"/>
+        <circle cx="60" cy="150" r="10" fill="var(--bone)"/>
+        <circle cx="200" cy="70" r="5" fill="var(--bone)"/>
+      </g>
+      <!-- spray splatter cluster, near CTA -->
+      <g filter="url(#roughEdge)" opacity="0.4">
+        <circle cx="80" cy="560" r="30" fill="var(--bone)"/>
+        <circle cx="120" cy="590" r="9" fill="var(--bone)"/>
+        <circle cx="45" cy="600" r="6" fill="var(--bone)"/>
+      </g>
+      <!-- hand-tag scrawl, "UNBOUND" freehand, rotated, bleeding behind hero copy -->
+      <g class="graff-hoverable" transform="translate(40,330) rotate(-7)" filter="url(#roughEdge)" opacity="0.85">
+        <text class="tag-scrawl" x="0" y="0" font-family="'Big Shoulders Display', sans-serif" font-weight="800"
+              font-size="46" fill="none" stroke="var(--bone)" stroke-width="2.4"
+              letter-spacing="2">FREEDOM TO CREATE</text>
+      </g>
+      <!-- underline scratch beneath tag -->
+      <path class="scratch-underline" d="M40 350 Q 220 372 430 348 T 680 356" fill="none" stroke="var(--bone)" stroke-width="3" opacity="0.5" filter="url(#roughEdge)"/>
+
+      <!-- spray can silhouette, bottom left of hero copy column -->
+      <g class="graff-hoverable" transform="translate(50,660) scale(0.9)" opacity="0.7">
+        <rect x="0" y="18" width="34" height="70" rx="4" fill="none" stroke="var(--bone)" stroke-width="2.5"/>
+        <rect x="6" y="4" width="22" height="16" rx="2" fill="none" stroke="var(--bone)" stroke-width="2.5"/>
+        <rect x="12" y="-8" width="10" height="14" rx="2" fill="var(--bone)"/>
+        <circle cx="17" cy="50" r="9" fill="none" stroke="var(--bone)" stroke-width="2"/>
+        <path d="M28 -2 Q 46 -14 58 -26" stroke="var(--bone)" stroke-width="2.5" fill="none" opacity="0.7"/>
+        <circle cx="60" cy="-28" r="2.5" fill="var(--bone)" opacity="0.6"/>
+        <circle cx="50" cy="-18" r="1.8" fill="var(--bone)" opacity="0.5"/>
+      </g>
+    </svg>
+  </div>
+
+
+  <div class="wrap">
+    <div class="hero-copy reveal in">
+      <div class="eyebrow">Drop 001 — Out Now</div>
+      <h1>
+        <span class="ln">Freedom</span>
+        <span class="ln push">Is To</span>
+        <span class="ln out" style="position:relative;">
+          Create.
+          <svg class="drip-svg" aria-hidden="true" viewBox="0 0 420 70" style="position:absolute; left:2%; top:100%; width:88%; pointer-events:none; z-index:3;">
+            <g filter="url(#roughEdge)" opacity="0.95" fill="var(--bone)">
+              <path d="M20 0 h16 v28 q0 12 -8 12 t-8 -12 z"/>
+              <path d="M85 0 h11 v42 q0 16 -5.5 16 t-5.5 -16 z"/>
+              <path d="M140 0 h18 v18 q0 8 -9 8 t-9 -8 z"/>
+              <path d="M210 0 h13 v36 q0 13 -6.5 13 t-6.5 -13 z"/>
+              <path d="M270 0 h20 v24 q0 10 -10 10 t-10 -10 z"/>
+              <path d="M325 0 h11 v14 q0 6 -5.5 6 t-5.5 -6 z"/>
+            </g>
+          </svg>
+        </span>
+      </h1>
+      <p class="lede">Unbound is streetwear for the ones who don't ask permission. Built loose, printed loud, made to be worn until it falls apart.</p>
+      <div class="hero-ctas">
+        <a href="shop.html" class="btn btn-primary">Shop the Drop</a>
+        <a href="about.html" class="btn btn-ghost">Our Story</a>
+      </div>
+      <div class="hero-tag">
+        <div class="sticker spin">Lagos · Nigeria</div>
+        <div class="sticker outline">No Restock</div>
+      </div>
+    </div>
+    <div class="hero-visual reveal in">
+      <div class="ring r1"></div>
+      <div class="ring r2"></div>
+      <div class="frame">
+        <div class="corner-tag">
+          <div class="tag">
+            <span class="l1">DROP 001</span>
+            <span class="l2">UNBOUND</span>
+          </div>
+        </div>
+        <img class="torn-frame" src="assets/tee-black.png" alt="Unbound black bondage graphic tee, front and back">
+        <div class="bottom-tag">
+          <div class="sticker outline">Freedom To Create</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="hazard-strip"></div>
+<div class="marquee" aria-hidden="true">
+  <div>
+    <span class="tag-graff" style="font-size:1.3rem;">DROP 001 LIVE</span><span>◆</span>
+    <span class="tag-graff" style="font-size:1.3rem;">MADE FOR THE UNBOUND</span><span>◆</span>
+    <span class="tag-graff" style="font-size:1.3rem;">LIMITED RUN · NO RESTOCK</span><span>◆</span>
+    <span class="tag-graff" style="font-size:1.3rem;">LAGOS STREET STANDARD</span><span>◆</span>
+    <span class="tag-graff" style="font-size:1.3rem;">DROP 001 LIVE</span><span>◆</span>
+    <span class="tag-graff" style="font-size:1.3rem;">MADE FOR THE UNBOUND</span><span>◆</span>
+    <span class="tag-graff" style="font-size:1.3rem;">LIMITED RUN · NO RESTOCK</span><span>◆</span>
+    <span class="tag-graff" style="font-size:1.3rem;">LAGOS STREET STANDARD</span><span>◆</span>
+  </div>
+</div>
+<div class="hazard-strip"></div>
+
+<section class="drop reveal" style="position:relative;">
+  <svg aria-hidden="true" style="position:absolute; top:20px; left:-10px; width:220px; height:140px; z-index:0; pointer-events:none;" viewBox="0 0 220 140">
+    <g filter="url(#roughEdge)" opacity="0.3">
+      <circle cx="30" cy="30" r="34" fill="var(--bone)"/>
+      <circle cx="75" cy="15" r="10" fill="var(--bone)"/>
+      <circle cx="10" cy="80" r="7" fill="var(--bone)"/>
+    </g>
+  </svg>
+  <div class="wrap">
+    <div class="section-head">
+      <h2 style="position:relative;">
+        Featured Piece
+        <svg aria-hidden="true" style="position:absolute; left:0; bottom:-14px; width:80%; height:20px;" viewBox="0 0 300 20">
+          <path d="M4 12 Q 80 2 150 10 T 296 8" stroke="var(--bone)" stroke-width="3" fill="none" opacity="0.6" filter="url(#roughEdge)"/>
+        </svg>
+      </h2>
+      <p>One hoodie, two statements. Front carries the name. Back carries the warning.</p>
+    </div>
+    <div class="drop-grid">
+      <div class="drop-shot">
+        <img class="torn-frame" src="assets/tee-black.png" alt="Unbound black bondage graphic tee, front and back" style="filter:contrast(1.08) saturate(0.85);">
+      </div>
+      <div class="drop-info">
+        <div class="kicker">
+          <div class="sticker">Bondage Graphic</div>
+        </div>
+        <h3>Bondage Tee — Black</h3>
+        <div class="price">₦15,000</div>
+        <p class="desc">Back graffiti graphic, front wordmark with a quiet manifesto line under the collar. 220gsm cotton, boxy fit, built to move with you.</p>
+        <ul class="drop-specs">
+          <li>Fabric <b>220gsm cotton</b></li>
+          <li>Fit <b>Boxy / relaxed</b></li>
+          <li>Print <b>Front wordmark + full back graphic</b></li>
+          <li>Sizes <b>S – XXL</b></li>
+        </ul>
+        <a href="shop.html" class="btn btn-primary">View in Shop</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="manifesto reveal">
+  <div class="wrap">
+    <blockquote style="font-family:'Space Grotesk',sans-serif; text-transform:none; font-weight:500; font-size:clamp(1.3rem,2.6vw,1.8rem); line-height:1.6; letter-spacing:0; max-width:760px;">
+      "Unbound is more than just clothing; it's a canvas for your imagination. We believe creativity knows no bounds, and our apparel is designed to empower you to express your individuality and explore endless possibilities without limitations."
+    </blockquote>
+    <p>— The Unbound Philosophy</p>
+  </div>
+</section>
+
+<section class="manifesto reveal" style="border-top:none; background:var(--ink);">
+  <div class="wrap">
+    <blockquote>Falling into a world filled <em>with different possibilities.</em></blockquote>
+    <p>— Unbound, Drop 001</p>
+  </div>
+</section>
+
+<section class="new-drop reveal">
+  <div class="wrap">
+    <div class="section-head">
+      <h2 class="split-target">Just Dropped</h2>
+      <p>Shorts season is here. Same DNA, warmer weather.</p>
+    </div>
+    <div class="new-drop-grid">
+      <div class="new-drop-shot">
+        <img class="torn-frame" src="assets/shorts-white.jpg" alt="Unbound shorts, white colorway" style="max-width:100%; filter:contrast(1.05);">
+      </div>
+      <div class="new-drop-info">
+        <div class="sticker" style="margin-bottom:18px;">New Drop</div>
+        <h3>The Unbound Shorts</h3>
+        <p class="tagline">There's no limit to creativity — now it fits in your gym bag. Heavyweight fleece, arched wordmark, the same manifesto stitched in. Built for the days it's too hot for the hoodie but you're still not toning it down.</p>
+        <div class="colorway-label">Available Colorways</div>
+        <div class="colorway-swatches">
+          <button class="sw-white active" data-name="White" aria-label="White"></button>
+          <button class="sw-cream" data-name="Cream" aria-label="Cream"></button>
+          <button class="sw-green" data-name="Green" aria-label="Green"></button>
+          <button class="sw-blue" data-name="Blue" aria-label="Blue"></button>
+          <button class="sw-black" data-name="Black" aria-label="Black"></button>
+        </div>
+        <a href="shop.html" class="btn btn-primary">Shop The Shorts</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="cta-band reveal">
+  <div class="wrap">
+    <h2>Drop 001 Won't Restock.</h2>
+    <p>Once it's gone, it's gone. Get your size before the run closes.</p>
+    <a href="shop.html" class="btn btn-primary">Shop the Drop</a>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <div class="fgrid">
+      <div class="col">
+        <div class="logo-mark" style="margin-bottom:16px;"><img src="assets/logo.png" alt="Unbound"></div>
+        <p style="color:var(--bone-dim); font-size:0.85rem; max-width:220px; line-height:1.6;">Streetwear made for the ones who don't ask permission.</p>
+      </div>
+      <div class="col">
+        <h4>Shop</h4>
+        <a href="shop.html">Drop 001</a>
+        <a href="shop.html">Hoodies</a>
+      </div>
+      <div class="col">
+        <h4>Company</h4>
+        <a href="about.html">About</a>
+        <a href="models.html">Models</a>
+        <a href="contact.html">Contact</a>
+      </div>
+    </div>
+    <div class="bottom">
+      <span>© 2026 Unbound.</span>
+      <span>Freedom is to create.</span>
+    </div>
+  </div>
+</footer>
+
+<script>
+  // cursor-reactive 3D tilt on hero product frame
+  const heroVisual = document.querySelector('.hero-visual');
+  const frame = document.querySelector('.hero-visual .frame');
+  if(heroVisual && frame){
+    heroVisual.addEventListener('mousemove', (e) => {
+      const rect = heroVisual.getBoundingClientRect();
+      const x = (e.clientX - rect.left) / rect.width - 0.5;
+      const y = (e.clientY - rect.top) / rect.height - 0.5;
+      frame.style.transform = `rotate(-3deg) rotateY(${x * 18}deg) rotateX(${-y * 14}deg) scale(1.02)`;
+    });
+    heroVisual.addEventListener('mouseleave', () => {
+      frame.style.transform = 'rotate(-3deg)';
+    });
+  }
+</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+<script src="cart.js"></script>
+<script>
+  document.querySelectorAll('.colorway-swatches button').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.colorway-swatches button').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+    });
+  });
+</script>
+</body>
+</html>

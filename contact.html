@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Contact — UNBOUND</title>
+<link rel="stylesheet" href="style.css">
+<style>
+  .contact-hero{padding:120px 0 60px; text-align:center; position:relative; overflow:hidden;}
+  .contact-hero h1{font-size:clamp(2.6rem, 6vw, 4.2rem);}
+  .contact-hero p{color:var(--bone-dim); max-width:440px; margin:20px auto 0; font-size:1rem; line-height:1.6;}
+
+  .contact-grid{
+    display:grid; grid-template-columns:repeat(3, 1fr); gap:20px;
+    padding:20px 0 130px;
+  }
+  .contact-card{
+    position:relative;
+    border:1px solid var(--line); padding:38px 28px 30px; text-align:center;
+    transition:border-color var(--dur-hover) var(--ease-editorial), transform var(--dur-hover) var(--ease-editorial);
+  }
+  .contact-card:hover{border-color:var(--static); transform:translateY(-5px);}
+  .contact-card .icon{
+    width:48px; height:48px; margin:0 auto 20px;
+    border:1px solid var(--bone); border-radius:50%;
+    display:flex; align-items:center; justify-content:center;
+    font-family:'Big Shoulders Display',sans-serif; font-weight:800; font-size:1.2rem;
+  }
+  .contact-card h4{font-size:1.05rem; margin-bottom:10px; letter-spacing:0.04em; text-transform:uppercase;}
+  .contact-card a, .contact-card p{color:var(--bone-dim); font-size:0.95rem;}
+  .contact-card a{text-decoration:underline; text-underline-offset:3px;}
+  .contact-card a:hover{color:var(--bone);}
+  @media (max-width:760px){ .contact-grid{grid-template-columns:1fr;} }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="wrap">
+    <a href="index.html" class="logo-mark"><img src="assets/logo.png" alt="Unbound"></a>
+    <div class="navlinks">
+      <a href="index.html">Home</a>
+      <a href="shop.html">Shop</a>
+      <a href="models.html">Models</a>
+      <a href="about.html">About</a>
+      <a href="contact.html" class="active">Contact</a>
+    </div>
+    <button class="cart-btn" onclick="ubOpenCart()">Cart <span class="cart-count">0</span></button>
+  </div>
+</nav>
+
+<div class="cart-overlay" id="cartOverlay" onclick="ubCloseCart()"></div>
+<div class="cart-drawer" id="cartDrawer">
+  <div class="cart-head">
+    <h3>Your Cart</h3>
+    <button class="cart-close" onclick="ubCloseCart()" aria-label="Close cart">&times;</button>
+  </div>
+  <div class="cart-items" id="cartItems"></div>
+  <div class="cart-foot" id="cartFoot">
+    <div class="cart-subtotal"><span>Subtotal</span><span id="cartSubtotal">₦0</span></div>
+    <p class="cart-note">Hoodie prices confirmed at checkout. Shipping calculated next step.</p>
+    <a href="checkout.html" class="btn btn-primary">Checkout</a>
+  </div>
+</div>
+
+<section class="contact-hero reveal in">
+  <div class="halftone-bg"></div>
+  <div class="wrap">
+    <div class="sticker outline" style="margin-bottom:20px;">We Reply Fast</div>
+    <h1>Get In Touch</h1>
+    <p>Questions about a drop, a size, or an order — reach out and someone from the team will get back to you.</p>
+  </div>
+</section>
+
+<section class="wrap">
+  <div class="contact-grid">
+    <div class="contact-card reveal">
+      <div class="icon">☎</div>
+      <h4>Call / WhatsApp</h4>
+      <a href="tel:08080324504">0808 032 4504</a>
+    </div>
+    <div class="contact-card reveal">
+      <div class="icon">@</div>
+      <h4>Email</h4>
+      <p>Coming soon — call for now</p>
+    </div>
+    <div class="contact-card reveal">
+      <div class="icon">◎</div>
+      <h4>Socials</h4>
+      <p>Instagram / TikTok — links coming soon</p>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <div class="fgrid">
+      <div class="col">
+        <div class="logo-mark" style="margin-bottom:16px;"><img src="assets/logo.png" alt="Unbound"></div>
+        <p style="color:var(--bone-dim); font-size:0.85rem; max-width:220px; line-height:1.6;">Streetwear made for the ones who don't ask permission.</p>
+      </div>
+      <div class="col">
+        <h4>Shop</h4>
+        <a href="shop.html">Drop 001</a>
+        <a href="shop.html">Hoodies</a>
+      </div>
+      <div class="col">
+        <h4>Company</h4>
+        <a href="about.html">About</a>
+        <a href="models.html">Models</a>
+        <a href="contact.html">Contact</a>
+      </div>
+    </div>
+    <div class="bottom">
+      <span>© 2026 Unbound.</span>
+      <span>Freedom is to create.</span>
+    </div>
+  </div>
+</footer>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+<script src="cart.js"></script>
+</body>
+</html>

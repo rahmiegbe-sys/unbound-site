@@ -1,0 +1,662 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard — UNBOUND</title>
+<link rel="stylesheet" href="style.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.4/chart.umd.min.js"></script>
+<style>
+  body{overflow-x:hidden;}
+  .dash-wrap{max-width:1280px; margin:0 auto; padding:0 24px 100px;}
+
+  /* ---------- login ---------- */
+  .admin-login{max-width:420px; margin:120px auto; text-align:center; padding:0 24px;}
+  .admin-login .field{margin-top:20px; text-align:left;}
+  .admin-login input{
+    width:100%; background:var(--ink); border:1px solid var(--line); color:var(--bone);
+    padding:12px 14px; font-family:'IBM Plex Mono', monospace; font-size:0.9rem; margin-top:8px;
+  }
+  .admin-login input:focus{outline:none; border-color:var(--bone);}
+  .admin-error{color:var(--bone); font-size:0.85rem; margin-top:14px; display:none;}
+
+  /* ---------- header ---------- */
+  .dash-header{
+    position:relative; overflow:hidden;
+    padding:44px 24px 0; margin-bottom:8px;
+  }
+  .dash-header .wrap{max-width:1280px; margin:0 auto; position:relative; z-index:2;}
+  .dash-title-row{display:flex; justify-content:space-between; align-items:flex-end; flex-wrap:wrap; gap:16px; margin-bottom:24px;}
+  .dash-title-row h1{font-size:clamp(1.8rem, 4vw, 2.6rem);}
+  .dash-refresh{font-size:0.76rem; color:var(--static); cursor:pointer; text-decoration:underline;}
+
+  /* ---------- tabs ---------- */
+  .dash-tabs{
+    display:flex; gap:8px; overflow-x:auto; padding-bottom:2px;
+    border-bottom:1px solid var(--line); margin-bottom:32px;
+  }
+  .dash-tab{
+    flex-shrink:0; padding:12px 18px; font-size:0.8rem; letter-spacing:0.04em; text-transform:uppercase;
+    font-weight:600; color:var(--static); cursor:pointer; border-bottom:2px solid transparent;
+    transition:color var(--dur-hover) ease, border-color var(--dur-hover) ease;
+  }
+  .dash-tab:hover{color:var(--bone-dim);}
+  .dash-tab.active{color:var(--bone); border-color:var(--bone);}
+  .dash-panel{display:none;}
+  .dash-panel.active{display:block;}
+
+  /* ---------- KPI cards ---------- */
+  .kpi-grid{display:grid; grid-template-columns:repeat(4, 1fr); gap:16px; margin-bottom:32px;}
+  .kpi-card{border:1px solid var(--line); background:var(--ink-raised); padding:22px;}
+  .kpi-card .kpi-label{font-size:0.7rem; letter-spacing:0.07em; text-transform:uppercase; color:var(--static); margin-bottom:10px;}
+  .kpi-card .kpi-value{font-family:'Big Shoulders Display',sans-serif; font-size:2rem; font-weight:700;}
+  .kpi-card.alert{border-color:var(--bone);}
+  @media (max-width:900px){ .kpi-grid{grid-template-columns:repeat(2,1fr);} }
+  @media (max-width:520px){ .kpi-grid{grid-template-columns:1fr;} }
+
+  .dash-section{margin-bottom:40px;}
+  .dash-section-head{display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; flex-wrap:wrap; gap:12px;}
+  .dash-section-head h3{font-size:1.1rem; letter-spacing:0.01em;}
+
+  .chart-card{border:1px solid var(--line); background:var(--ink-raised); padding:24px; height:320px;}
+
+  .low-stock-banner{
+    border:1px solid var(--bone); padding:14px 18px; margin-bottom:24px;
+    display:flex; align-items:center; gap:12px; font-size:0.85rem; color:var(--bone-dim);
+  }
+  .low-stock-banner b{color:var(--bone);}
+
+  /* ---------- toolbar (search/filter/export) ---------- */
+  .dash-toolbar{display:flex; gap:10px; flex-wrap:wrap; margin-bottom:18px; align-items:center;}
+  .dash-toolbar input, .dash-toolbar select{
+    background:var(--ink); border:1px solid var(--line); color:var(--bone);
+    padding:10px 12px; font-family:'Space Grotesk',sans-serif; font-size:0.84rem;
+  }
+  .dash-toolbar input{flex:1; min-width:160px;}
+  .dash-toolbar input:focus, .dash-toolbar select:focus{outline:none; border-color:var(--bone);}
+
+  /* ---------- tables (shared) ---------- */
+  .dash-table-wrap{overflow-x:auto; border:1px solid var(--line);}
+  table.dash-table{width:100%; border-collapse:collapse; font-size:0.83rem;}
+  .dash-table th{
+    text-align:left; padding:11px 13px; font-size:0.66rem; letter-spacing:0.06em; text-transform:uppercase;
+    color:var(--static); border-bottom:1px solid var(--line); white-space:nowrap;
+  }
+  .dash-table td{padding:11px 13px; border-bottom:1px solid var(--line); vertical-align:top; color:var(--bone-dim);}
+  .dash-table tr:last-child td{border-bottom:none;}
+  .dash-table tr:hover td{background:var(--ink);}
+  .mono{font-family:'IBM Plex Mono', monospace; font-size:0.78rem; color:var(--bone);}
+
+  .badge{
+    display:inline-block; padding:3px 9px; font-size:0.66rem; letter-spacing:0.04em; text-transform:uppercase;
+    border:1px solid var(--line); white-space:nowrap;
+  }
+  .badge.ok{border-color:var(--bone); color:var(--bone);}
+  .badge.warn{color:var(--bone); border-color:var(--bone); background:rgba(237,234,226,0.08);}
+  .badge.muted{color:var(--static);}
+
+  .dash-select{background:var(--ink); border:1px solid var(--line); color:var(--bone); padding:6px 8px; font-size:0.76rem;}
+  .dash-btn-sm{
+    border:1px solid var(--line); background:none; color:var(--bone-dim); padding:6px 10px;
+    font-size:0.72rem; letter-spacing:0.03em; text-transform:uppercase; cursor:pointer;
+    transition:border-color var(--dur-hover) ease, color var(--dur-hover) ease;
+  }
+  .dash-btn-sm:hover{border-color:var(--bone); color:var(--bone);}
+  .num-input{
+    width:64px; background:var(--ink); border:1px solid var(--line); color:var(--bone);
+    padding:6px 8px; font-family:'IBM Plex Mono',monospace; font-size:0.82rem;
+  }
+
+  .dash-empty{padding:50px; text-align:center; color:var(--static); font-size:0.85rem;}
+
+  /* ---------- modal (timeline / customer orders) ---------- */
+  .dash-modal-overlay{
+    position:fixed; inset:0; background:rgba(0,0,0,0.7); z-index:200;
+    display:none; align-items:center; justify-content:center; padding:24px;
+  }
+  .dash-modal-overlay.open{display:flex;}
+  .dash-modal{
+    background:var(--ink-raised); border:1px solid var(--line); max-width:480px; width:100%;
+    max-height:80vh; overflow-y:auto; padding:28px;
+  }
+  .dash-modal h4{font-size:1.1rem; margin-bottom:18px;}
+  .dash-modal-close{float:right; background:none; border:none; color:var(--bone); font-size:1.3rem; cursor:pointer;}
+  .timeline-item{border-left:2px solid var(--line); padding:0 0 18px 16px; position:relative; margin-left:4px;}
+  .timeline-item::before{
+    content:''; position:absolute; left:-5px; top:2px; width:8px; height:8px; border-radius:50%; background:var(--bone);
+  }
+  .timeline-item .t-type{font-size:0.8rem; font-weight:600; color:var(--bone); letter-spacing:0.02em;}
+  .timeline-item .t-note{font-size:0.78rem; color:var(--bone-dim); margin-top:3px;}
+  .timeline-item .t-date{font-size:0.7rem; color:var(--static); margin-top:3px;}
+
+  @media (max-width:640px){
+    .dash-table thead{display:none;}
+    .dash-table, .dash-table tbody, .dash-table tr, .dash-table th, .dash-table td{display:block; width:100%;}
+    .dash-table tbody tr{border-bottom:1px solid var(--line); padding:12px 0;}
+    .dash-table tbody td{border-bottom:none; padding:4px 13px; display:flex; justify-content:space-between; gap:10px;}
+    .dash-table tbody td::before{
+      content:attr(data-label); color:var(--static); font-size:0.66rem; letter-spacing:0.05em; text-transform:uppercase; flex-shrink:0;
+    }
+  }
+</style>
+</head>
+<body>
+
+<div class="corner-logo"><img src="assets/logo.png" alt="Unbound logo"></div>
+
+<div id="adminLogin" class="admin-login">
+  <div class="sticker" style="margin-bottom:16px;">Unbound Admin</div>
+  <h1 style="font-size:1.8rem; margin-bottom:8px;">Dashboard</h1>
+  <p style="color:var(--bone-dim); font-size:0.88rem;">Enter your admin key. Kept only in this browser tab.</p>
+  <div class="field">
+    <label for="adminKeyInput">Admin key</label>
+    <input id="adminKeyInput" type="password" placeholder="Paste your ADMIN_API_KEY">
+  </div>
+  <button class="btn btn-primary" style="width:100%; justify-content:center; margin-top:18px;" onclick="ubAdminLogin()">Enter</button>
+  <p class="admin-error" id="adminError">That key was rejected. Double-check it matches ADMIN_API_KEY on the server.</p>
+</div>
+
+<div id="adminDashboard" style="display:none;">
+
+  <header class="dash-header">
+    <div class="halftone-bg"></div>
+    <div class="wrap">
+      <div class="dash-title-row">
+        <div>
+          <div class="sticker spin" style="margin-bottom:14px;">Unbound HQ</div>
+          <h1>Dashboard</h1>
+        </div>
+        <span class="dash-refresh" onclick="ubRefreshAll()">↻ Refresh all</span>
+      </div>
+    </div>
+  </header>
+
+  <div class="dash-wrap">
+    <nav class="dash-tabs">
+      <div class="dash-tab active" data-tab="overview">Overview</div>
+      <div class="dash-tab" data-tab="orders">Orders</div>
+      <div class="dash-tab" data-tab="inventory">Inventory</div>
+      <div class="dash-tab" data-tab="customers">Customers</div>
+      <div class="dash-tab" data-tab="refunds">Refunds</div>
+    </nav>
+
+    <!-- ============ OVERVIEW ============ -->
+    <section class="dash-panel active" id="panel-overview">
+      <div id="lowStockBanner"></div>
+
+      <div class="kpi-grid" id="kpiGrid">
+        <div class="kpi-card"><div class="kpi-label">Total Revenue</div><div class="kpi-value">—</div></div>
+        <div class="kpi-card"><div class="kpi-label">Paid Orders</div><div class="kpi-value">—</div></div>
+        <div class="kpi-card"><div class="kpi-label">Low Stock Items</div><div class="kpi-value">—</div></div>
+        <div class="kpi-card"><div class="kpi-label">Pending Refunds</div><div class="kpi-value">—</div></div>
+      </div>
+
+      <div class="dash-section">
+        <div class="dash-section-head"><h3>Revenue — Last 30 Days</h3></div>
+        <div class="chart-card"><canvas id="salesChart"></canvas></div>
+      </div>
+
+      <div class="dash-section">
+        <div class="dash-section-head"><h3>Top Products</h3></div>
+        <div class="dash-table-wrap">
+          <table class="dash-table">
+            <thead><tr><th>Product</th><th>Qty Sold</th><th>Revenue</th></tr></thead>
+            <tbody id="topProductsBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ ORDERS ============ -->
+    <section class="dash-panel" id="panel-orders">
+      <div class="dash-toolbar">
+        <input id="orderSearch" type="text" placeholder="Search reference, name, email, phone...">
+        <select id="orderPaymentFilter" class="dash-select">
+          <option value="">All payment statuses</option>
+          <option>PENDING</option><option>PAID</option><option>FAILED</option><option>CANCELLED</option><option>REFUNDED</option>
+        </select>
+        <select id="orderStatusFilter" class="dash-select">
+          <option value="">All order statuses</option>
+          <option>PENDING_PAYMENT</option><option>PAYMENT_CONFIRMED</option><option>PROCESSING</option>
+          <option>READY_FOR_DISPATCH</option><option>OUT_FOR_DELIVERY</option><option>DELIVERED</option><option>CANCELLED</option>
+        </select>
+        <button class="btn btn-ghost" style="padding:10px 18px; font-size:0.76rem;" onclick="ubLoadOrders()">Filter</button>
+        <button class="btn btn-ghost" style="padding:10px 18px; font-size:0.76rem;" onclick="ubExportOrdersCsv()">Export CSV</button>
+      </div>
+      <div class="dash-table-wrap">
+        <table class="dash-table">
+          <thead>
+            <tr>
+              <th>Reference</th><th>Customer</th><th>Items</th><th>Delivery</th><th>Courier</th>
+              <th>Total</th><th>Payment</th><th>Order Status</th><th>Date</th><th></th>
+            </tr>
+          </thead>
+          <tbody id="ordersBody"></tbody>
+        </table>
+        <div class="dash-empty" id="ordersEmpty" style="display:none;">No orders match.</div>
+      </div>
+    </section>
+
+    <!-- ============ INVENTORY ============ -->
+    <section class="dash-panel" id="panel-inventory">
+      <div class="dash-section-head"><h3>Inventory</h3></div>
+      <div class="dash-table-wrap">
+        <table class="dash-table">
+          <thead><tr><th>Product</th><th>Price</th><th>Stock</th><th>Low-Stock Alert Below</th><th>Status</th></tr></thead>
+          <tbody id="productsBody"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ============ CUSTOMERS ============ -->
+    <section class="dash-panel" id="panel-customers">
+      <div class="dash-toolbar">
+        <input id="customerSearch" type="text" placeholder="Search name or email...">
+        <button class="btn btn-ghost" style="padding:10px 18px; font-size:0.76rem;" onclick="ubLoadCustomers()">Search</button>
+      </div>
+      <div class="dash-table-wrap">
+        <table class="dash-table">
+          <thead><tr><th>Customer</th><th>Contact</th><th>Orders</th><th>Lifetime Value</th><th>Last Order</th><th></th></tr></thead>
+          <tbody id="customersBody"></tbody>
+        </table>
+        <div class="dash-empty" id="customersEmpty" style="display:none;">No customers yet.</div>
+      </div>
+    </section>
+
+    <!-- ============ REFUNDS ============ -->
+    <section class="dash-panel" id="panel-refunds">
+      <div class="dash-toolbar">
+        <select id="refundStatusFilter" class="dash-select">
+          <option value="">All statuses</option>
+          <option>REQUESTED</option><option>APPROVED</option><option>REJECTED</option><option>COMPLETED</option>
+        </select>
+        <button class="btn btn-ghost" style="padding:10px 18px; font-size:0.76rem;" onclick="ubLoadRefunds()">Filter</button>
+      </div>
+      <div class="dash-table-wrap">
+        <table class="dash-table">
+          <thead><tr><th>Order</th><th>Customer</th><th>Reason</th><th>Amount</th><th>Status</th><th>Requested</th><th></th></tr></thead>
+          <tbody id="refundsBody"></tbody>
+        </table>
+        <div class="dash-empty" id="refundsEmpty" style="display:none;">No refund requests.</div>
+      </div>
+    </section>
+  </div>
+</div>
+
+<!-- Timeline / Customer-orders modal -->
+<div class="dash-modal-overlay" id="modalOverlay" onclick="if(event.target===this) ubCloseModal()">
+  <div class="dash-modal">
+    <button class="dash-modal-close" onclick="ubCloseModal()">&times;</button>
+    <h4 id="modalTitle">Details</h4>
+    <div id="modalBody"></div>
+  </div>
+</div>
+
+<script src="config.js"></script>
+<script>
+  const UB_ORDER_STATUSES = [
+    'PENDING_PAYMENT', 'PAYMENT_CONFIRMED', 'PROCESSING',
+    'READY_FOR_DISPATCH', 'OUT_FOR_DELIVERY', 'DELIVERED', 'CANCELLED',
+  ];
+  let salesChartInstance = null;
+  let lastOrdersCache = [];
+
+  function ubAdminKey(){ return sessionStorage.getItem('ub_admin_key'); }
+  function ubFmt(n){ return '₦' + Number(n || 0).toLocaleString('en-NG'); }
+  function ubDate(d){ return new Date(d).toLocaleString(); }
+
+  async function ubApi(path, opts = {}){
+    const res = await fetch(`${UB_API_BASE}/api/admin${path}`, {
+      ...opts,
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${ubAdminKey()}`,
+        ...(opts.headers || {}),
+      },
+    });
+    const data = await res.json().catch(() => ({}));
+    if(!res.ok) throw new Error(data.error || 'Request failed');
+    return data;
+  }
+
+  /* ---------- auth ---------- */
+  async function ubAdminLogin(){
+    const key = document.getElementById('adminKeyInput').value.trim();
+    if(!key) return;
+    sessionStorage.setItem('ub_admin_key', key);
+    try{
+      await ubApi('/orders?limit=1');
+      document.getElementById('adminLogin').style.display = 'none';
+      document.getElementById('adminDashboard').style.display = 'block';
+      ubRefreshAll();
+    }catch(e){
+      document.getElementById('adminError').style.display = 'block';
+      sessionStorage.removeItem('ub_admin_key');
+    }
+  }
+
+  /* ---------- tabs ---------- */
+  document.querySelectorAll('.dash-tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+      document.querySelectorAll('.dash-tab').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.dash-panel').forEach(p => p.classList.remove('active'));
+      tab.classList.add('active');
+      document.getElementById('panel-' + tab.dataset.tab).classList.add('active');
+    });
+  });
+
+  function ubRefreshAll(){
+    ubLoadAnalytics();
+    ubLoadOrders();
+    ubLoadProducts();
+    ubLoadCustomers();
+    ubLoadRefunds();
+  }
+
+  /* ============ OVERVIEW ============ */
+  async function ubLoadAnalytics(){
+    try{
+      const data = await ubApi('/analytics/summary');
+      const kpis = document.querySelectorAll('#kpiGrid .kpi-value');
+      kpis[0].textContent = ubFmt(data.totalRevenue);
+      kpis[1].textContent = data.paidOrderCount;
+
+      const lowStock = await ubApi('/products/low-stock');
+      kpis[2].textContent = lowStock.products.length;
+      document.querySelectorAll('#kpiGrid .kpi-card')[2].classList.toggle('alert', lowStock.products.length > 0);
+
+      const refunds = await ubApi('/refunds?status=REQUESTED');
+      kpis[3].textContent = refunds.refunds.length;
+      document.querySelectorAll('#kpiGrid .kpi-card')[3].classList.toggle('alert', refunds.refunds.length > 0);
+
+      const banner = document.getElementById('lowStockBanner');
+      banner.innerHTML = lowStock.products.length
+        ? `<div class="low-stock-banner">⚠️ <span><b>${lowStock.products.length} item(s)</b> at or below their low-stock threshold — check the Inventory tab.</span></div>`
+        : '';
+
+      const tp = document.getElementById('topProductsBody');
+      tp.innerHTML = data.topProducts.length
+        ? data.topProducts.map(p => `
+            <tr><td data-label="Product">${p.name}</td><td data-label="Qty Sold">${p.qtySold}</td><td data-label="Revenue">${ubFmt(p.revenue)}</td></tr>
+          `).join('')
+        : `<tr><td colspan="3" class="dash-empty">No sales yet.</td></tr>`;
+
+      ubRenderSalesChart(data.salesByDay);
+    }catch(e){ console.error(e); }
+  }
+
+  function ubRenderSalesChart(salesByDay){
+    const ctx = document.getElementById('salesChart');
+    if(salesChartInstance) salesChartInstance.destroy();
+    salesChartInstance = new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: salesByDay.map(d => d.day.slice(5)),
+        datasets: [{
+          label: 'Revenue (₦)',
+          data: salesByDay.map(d => d.revenue),
+          borderColor: '#EDEAE2',
+          backgroundColor: 'rgba(237,234,226,0.08)',
+          tension: 0.35,
+          fill: true,
+          pointRadius: 2,
+        }],
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: {
+          x: { ticks: { color: '#8C8C88', font: { size: 10 } }, grid: { color: 'rgba(237,234,226,0.08)' } },
+          y: { ticks: { color: '#8C8C88', font: { size: 10 } }, grid: { color: 'rgba(237,234,226,0.08)' } },
+        },
+      },
+    });
+  }
+
+  /* ============ ORDERS ============ */
+  async function ubLoadOrders(){
+    const search = document.getElementById('orderSearch').value.trim();
+    const paymentStatus = document.getElementById('orderPaymentFilter').value;
+    const orderStatus = document.getElementById('orderStatusFilter').value;
+    const params = new URLSearchParams({ search, paymentStatus, orderStatus, limit: 100 });
+
+    try{
+      const data = await ubApi(`/orders?${params}`);
+      lastOrdersCache = data.orders;
+      ubRenderOrders(data.orders);
+    }catch(e){ console.error(e); }
+  }
+
+  function ubRenderOrders(orders){
+    const body = document.getElementById('ordersBody');
+    const empty = document.getElementById('ordersEmpty');
+    if(orders.length === 0){ body.innerHTML = ''; empty.style.display = 'block'; return; }
+    empty.style.display = 'none';
+
+    body.innerHTML = orders.map(o => `
+      <tr>
+        <td data-label="Reference" class="mono">${o.reference}</td>
+        <td data-label="Customer">${o.customer.name}<br><span style="font-size:0.74rem;">${o.customer.phone}</span></td>
+        <td data-label="Items">${o.items.map(i => `${i.qty}× ${i.name}`).join('<br>')}</td>
+        <td data-label="Delivery">${o.deliveryZoneName}</td>
+        <td data-label="Courier">
+          ${o.courier ? `${o.courier.provider}${o.courier.trackingRef ? '<br><span class="mono" style="font-size:0.7rem;">'+o.courier.trackingRef+'</span>' : ''}`
+                       : `<button class="dash-btn-sm" onclick="ubAssignCourier('${o.id}')">Assign</button>`}
+        </td>
+        <td data-label="Total">${ubFmt(o.total)}</td>
+        <td data-label="Payment"><span class="badge ${ubPayClass(o.paymentStatus)}">${o.paymentStatus}</span></td>
+        <td data-label="Order Status">
+          <select class="dash-select" onchange="ubUpdateStatus('${o.id}', this.value)">
+            ${UB_ORDER_STATUSES.map(s => `<option value="${s}" ${s === o.orderStatus ? 'selected' : ''}>${s}</option>`).join('')}
+          </select>
+        </td>
+        <td data-label="Date" style="font-size:0.74rem;">${ubDate(o.createdAt)}</td>
+        <td data-label="">
+          <button class="dash-btn-sm" onclick="ubShowTimeline('${o.id}', '${o.reference}')">Timeline</button>
+          ${o.paymentStatus === 'PAID' ? `<button class="dash-btn-sm" style="margin-top:6px;" onclick="ubRequestRefund('${o.id}', ${o.total})">Refund</button>` : ''}
+        </td>
+      </tr>
+    `).join('');
+  }
+
+  function ubPayClass(status){
+    if(status === 'PAID') return 'ok';
+    if(status === 'FAILED' || status === 'CANCELLED') return 'muted';
+    if(status === 'REFUNDED') return 'warn';
+    return 'muted';
+  }
+
+  async function ubUpdateStatus(id, orderStatus){
+    try{
+      await ubApi(`/orders/${id}/status`, { method: 'PATCH', body: JSON.stringify({ orderStatus }) });
+    }catch(e){ alert(e.message); ubLoadOrders(); }
+  }
+
+  async function ubAssignCourier(id){
+    const provider = prompt('Courier provider (e.g. GIGL, Kwik, Self-delivery):');
+    if(!provider) return;
+    const trackingRef = prompt('Tracking reference (optional):') || '';
+    try{
+      await ubApi(`/orders/${id}/courier`, { method: 'PATCH', body: JSON.stringify({ provider, trackingRef }) });
+      ubLoadOrders();
+    }catch(e){ alert(e.message); }
+  }
+
+  async function ubRequestRefund(orderId, orderTotal){
+    const reason = prompt('Reason for refund:');
+    if(reason === null) return;
+    try{
+      await ubApi(`/orders/${orderId}/refund-request`, { method: 'POST', body: JSON.stringify({ reason }) });
+      alert('Refund request created — manage it from the Refunds tab.');
+      ubLoadRefunds();
+    }catch(e){ alert(e.message); }
+  }
+
+  function ubExportOrdersCsv(){
+    if(lastOrdersCache.length === 0){ alert('No orders to export.'); return; }
+    const headers = ['Reference','Customer Name','Email','Phone','Items','Delivery Zone','Address','Total','Payment Status','Order Status','Courier','Date'];
+    const rows = lastOrdersCache.map(o => [
+      o.reference, o.customer.name, o.customer.email, o.customer.phone,
+      o.items.map(i => `${i.qty}x ${i.name}`).join('; '),
+      o.deliveryZoneName, o.deliveryAddress, o.total, o.paymentStatus, o.orderStatus,
+      o.courier ? o.courier.provider : '', new Date(o.createdAt).toISOString(),
+    ]);
+    const csv = [headers, ...rows].map(r => r.map(v => `"${String(v).replace(/"/g,'""')}"`).join(',')).join('\n');
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `unbound-orders-${new Date().toISOString().slice(0,10)}.csv`;
+    a.click();
+  }
+
+  async function ubShowTimeline(orderId, reference){
+    try{
+      const data = await ubApi(`/orders/${orderId}/timeline`);
+      document.getElementById('modalTitle').textContent = `Timeline — ${reference}`;
+      document.getElementById('modalBody').innerHTML = data.events.length
+        ? data.events.map(e => `
+            <div class="timeline-item">
+              <div class="t-type">${e.event_type.replace(/_/g,' ')}</div>
+              ${e.note ? `<div class="t-note">${e.note}</div>` : ''}
+              <div class="t-date">${ubDate(e.created_at)}</div>
+            </div>
+          `).join('')
+        : '<p style="color:var(--static); font-size:0.85rem;">No events logged yet.</p>';
+      document.getElementById('modalOverlay').classList.add('open');
+    }catch(e){ alert(e.message); }
+  }
+
+  /* ============ INVENTORY ============ */
+  async function ubLoadProducts(){
+    try{
+      const data = await ubApi('/products');
+      const body = document.getElementById('productsBody');
+      body.innerHTML = data.products.map(p => `
+        <tr>
+          <td data-label="Product">${p.name}<br><span class="mono" style="font-size:0.72rem;">${p.productId}</span></td>
+          <td data-label="Price">${ubFmt(p.price)}</td>
+          <td data-label="Stock">
+            <input class="num-input" type="number" min="0" value="${p.stockQty}"
+                   onchange="ubUpdateStock('${p.productId}', this.value)">
+          </td>
+          <td data-label="Alert Below">
+            <input class="num-input" type="number" min="0" value="${p.lowStockThreshold}"
+                   onchange="ubUpdateThreshold('${p.productId}', this.value)">
+          </td>
+          <td data-label="Status">${p.isLowStock ? '<span class="badge warn">Low Stock</span>' : '<span class="badge ok">In Stock</span>'}</td>
+        </tr>
+      `).join('');
+    }catch(e){ console.error(e); }
+  }
+
+  async function ubUpdateStock(productId, stockQty){
+    try{
+      await ubApi(`/products/${productId}/stock`, { method: 'PATCH', body: JSON.stringify({ stockQty: Number(stockQty) }) });
+      ubLoadProducts();
+    }catch(e){ alert(e.message); }
+  }
+
+  async function ubUpdateThreshold(productId, lowStockThreshold){
+    try{
+      await ubApi(`/products/${productId}/threshold`, { method: 'PATCH', body: JSON.stringify({ lowStockThreshold: Number(lowStockThreshold) }) });
+      ubLoadProducts();
+    }catch(e){ alert(e.message); }
+  }
+
+  /* ============ CUSTOMERS ============ */
+  async function ubLoadCustomers(){
+    const search = document.getElementById('customerSearch').value.trim();
+    try{
+      const data = await ubApi(`/customers?search=${encodeURIComponent(search)}`);
+      const body = document.getElementById('customersBody');
+      const empty = document.getElementById('customersEmpty');
+      if(data.customers.length === 0){ body.innerHTML = ''; empty.style.display = 'block'; return; }
+      empty.style.display = 'none';
+      body.innerHTML = data.customers.map(c => `
+        <tr>
+          <td data-label="Customer">${c.name}</td>
+          <td data-label="Contact">${c.email}<br><span style="font-size:0.74rem;">${c.phone}</span></td>
+          <td data-label="Orders">${c.orderCount}</td>
+          <td data-label="Lifetime Value">${ubFmt(c.lifetimeValue)}</td>
+          <td data-label="Last Order">${ubDate(c.lastOrderAt)}</td>
+          <td data-label=""><button class="dash-btn-sm" onclick="ubShowCustomerOrders('${c.email}')">View Orders</button></td>
+        </tr>
+      `).join('');
+    }catch(e){ console.error(e); }
+  }
+
+  async function ubShowCustomerOrders(email){
+    try{
+      const data = await ubApi(`/customers/${encodeURIComponent(email)}/orders`);
+      document.getElementById('modalTitle').textContent = `Orders — ${email}`;
+      document.getElementById('modalBody').innerHTML = data.orders.length
+        ? data.orders.map(o => `
+            <div class="timeline-item">
+              <div class="t-type mono">${o.reference}</div>
+              <div class="t-note">${o.items.map(i=>`${i.qty}× ${i.name}`).join(', ')} — ${ubFmt(o.total)}</div>
+              <div class="t-date">${o.paymentStatus} · ${o.orderStatus} · ${ubDate(o.createdAt)}</div>
+            </div>
+          `).join('')
+        : '<p style="color:var(--static); font-size:0.85rem;">No orders found.</p>';
+      document.getElementById('modalOverlay').classList.add('open');
+    }catch(e){ alert(e.message); }
+  }
+
+  /* ============ REFUNDS ============ */
+  async function ubLoadRefunds(){
+    const status = document.getElementById('refundStatusFilter').value;
+    try{
+      const data = await ubApi(`/refunds${status ? '?status=' + status : ''}`);
+      const body = document.getElementById('refundsBody');
+      const empty = document.getElementById('refundsEmpty');
+      if(data.refunds.length === 0){ body.innerHTML = ''; empty.style.display = 'block'; return; }
+      empty.style.display = 'none';
+      body.innerHTML = data.refunds.map(r => `
+        <tr>
+          <td data-label="Order" class="mono">${r.orderReference}</td>
+          <td data-label="Customer">${r.customerName}</td>
+          <td data-label="Reason">${r.reason || '—'}</td>
+          <td data-label="Amount">${ubFmt(r.amount)}</td>
+          <td data-label="Status"><span class="badge ${r.status === 'COMPLETED' ? 'ok' : r.status === 'REJECTED' ? 'muted' : 'warn'}">${r.status}</span></td>
+          <td data-label="Requested" style="font-size:0.74rem;">${ubDate(r.createdAt)}</td>
+          <td data-label="">${ubRefundActions(r)}</td>
+        </tr>
+      `).join('');
+    }catch(e){ console.error(e); }
+  }
+
+  function ubRefundActions(r){
+    if(r.status === 'REQUESTED'){
+      return `<button class="dash-btn-sm" onclick="ubUpdateRefund('${r.id}','APPROVED')">Approve</button>
+              <button class="dash-btn-sm" style="margin-top:6px;" onclick="ubUpdateRefund('${r.id}','REJECTED')">Reject</button>`;
+    }
+    if(r.status === 'APPROVED'){
+      return `<button class="dash-btn-sm" onclick="ubUpdateRefund('${r.id}','COMPLETED')">Mark Completed</button>`;
+    }
+    return '—';
+  }
+
+  async function ubUpdateRefund(id, status){
+    try{
+      await ubApi(`/refunds/${id}/status`, { method: 'PATCH', body: JSON.stringify({ status }) });
+      ubLoadRefunds();
+      ubLoadOrders();
+    }catch(e){ alert(e.message); }
+  }
+
+  /* ---------- modal ---------- */
+  function ubCloseModal(){ document.getElementById('modalOverlay').classList.remove('open'); }
+
+  document.addEventListener('DOMContentLoaded', async () => {
+    if(ubAdminKey()){
+      try{
+        await ubApi('/orders?limit=1');
+        document.getElementById('adminLogin').style.display = 'none';
+        document.getElementById('adminDashboard').style.display = 'block';
+        ubRefreshAll();
+      }catch(e){ /* stay on login */ }
+    }
+  });
+</script>
+</body>
+</html>

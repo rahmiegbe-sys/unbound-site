@@ -1,0 +1,517 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dev Console — UNBOUND</title>
+<link rel="stylesheet" href="style.css">
+<style>
+  body{ font-family:'IBM Plex Mono', monospace; overflow-x:hidden; }
+  .dev-wrap{max-width:1280px; margin:0 auto; padding:0 24px 100px;}
+
+  .dev-login{max-width:420px; margin:120px auto; text-align:center; padding:0 24px; font-family:'Space Grotesk',sans-serif;}
+  .dev-login .field{margin-top:20px; text-align:left;}
+  .dev-login input{
+    width:100%; background:var(--ink); border:1px solid var(--line); color:var(--bone);
+    padding:12px 14px; font-family:'IBM Plex Mono', monospace; font-size:0.9rem; margin-top:8px;
+  }
+  .dev-login input:focus{outline:none; border-color:var(--bone);}
+  .dev-error{color:var(--bone); font-size:0.85rem; margin-top:14px; display:none; font-family:'Space Grotesk',sans-serif;}
+
+  .dev-header{padding:36px 24px 0;}
+  .dev-header .wrap{max-width:1280px; margin:0 auto;}
+  .dev-title-row{display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:16px; margin-bottom:20px;}
+  .dev-title-row h1{font-family:'Big Shoulders Display',sans-serif; font-size:1.8rem; letter-spacing:0.01em;}
+  .dev-refresh{font-size:0.74rem; color:var(--static); cursor:pointer; text-decoration:underline;}
+
+  .dev-tabs{
+    display:flex; gap:6px; overflow-x:auto; padding-bottom:2px;
+    border-bottom:1px solid var(--line); margin-bottom:28px;
+  }
+  .dev-tab{
+    flex-shrink:0; padding:10px 14px; font-size:0.72rem; letter-spacing:0.03em; text-transform:uppercase;
+    color:var(--static); cursor:pointer; border-bottom:2px solid transparent;
+  }
+  .dev-tab.active{color:var(--bone); border-color:var(--bone);}
+  .dev-panel{display:none;}
+  .dev-panel.active{display:block;}
+
+  .status-grid{display:grid; grid-template-columns:repeat(auto-fit, minmax(200px,1fr)); gap:14px; margin-bottom:28px;}
+  .status-card{border:1px solid var(--line); background:var(--ink-raised); padding:18px;}
+  .status-card .s-label{font-size:0.66rem; letter-spacing:0.05em; text-transform:uppercase; color:var(--static); margin-bottom:8px;}
+  .status-card .s-value{font-size:1.3rem; font-weight:600; color:var(--bone);}
+  .status-card .s-sub{font-size:0.7rem; color:var(--static); margin-top:4px;}
+  .status-card.pass{border-color:var(--bone);}
+  .status-card.fail{border-color:var(--bone); background:rgba(237,234,226,0.06);}
+
+  .dev-section{margin-bottom:34px;}
+  .dev-section h3{font-size:0.9rem; font-family:'Space Grotesk',sans-serif; letter-spacing:0.02em; margin-bottom:12px; color:var(--bone);}
+
+  .check-list{display:flex; flex-direction:column; gap:8px;}
+  .check-row{
+    display:flex; align-items:flex-start; gap:10px; padding:10px 12px; border:1px solid var(--line);
+    font-size:0.78rem;
+  }
+  .check-row .dot{width:8px; height:8px; border-radius:50%; margin-top:4px; flex-shrink:0; background:var(--static);}
+  .check-row.pass .dot{background:var(--bone);}
+  .check-row .c-name{color:var(--bone); font-weight:600;}
+  .check-row .c-detail{color:var(--bone-dim); margin-top:2px;}
+
+  .dev-table-wrap{overflow-x:auto; border:1px solid var(--line);}
+  table.dev-table{width:100%; border-collapse:collapse; font-size:0.76rem;}
+  .dev-table th{
+    text-align:left; padding:10px 12px; font-size:0.62rem; letter-spacing:0.05em; text-transform:uppercase;
+    color:var(--static); border-bottom:1px solid var(--line); white-space:nowrap;
+  }
+  .dev-table td{padding:10px 12px; border-bottom:1px solid var(--line); vertical-align:top; color:var(--bone-dim);}
+  .dev-table tr:last-child td{border-bottom:none;}
+  .dev-empty{padding:40px; text-align:center; color:var(--static); font-size:0.8rem;}
+
+  .lvl{display:inline-block; padding:2px 7px; font-size:0.62rem; text-transform:uppercase; border:1px solid var(--line);}
+  .lvl.error{border-color:var(--bone); color:var(--bone);}
+  .lvl.warn{color:var(--bone-dim);}
+  .lvl.info{color:var(--static);}
+
+  .dev-toolbar{display:flex; gap:8px; margin-bottom:14px; flex-wrap:wrap;}
+  .dev-toolbar select, .dev-toolbar input{
+    background:var(--ink); border:1px solid var(--line); color:var(--bone);
+    padding:8px 10px; font-family:'IBM Plex Mono',monospace; font-size:0.76rem;
+  }
+
+  @media (max-width:640px){
+    .dev-table thead{display:none;}
+    .dev-table, .dev-table tbody, .dev-table tr, .dev-table th, .dev-table td{display:block; width:100%;}
+    .dev-table tbody tr{border-bottom:1px solid var(--line); padding:10px 0;}
+    .dev-table tbody td{border-bottom:none; padding:3px 12px; display:flex; justify-content:space-between; gap:8px;}
+    .dev-table tbody td::before{content:attr(data-label); color:var(--static); flex-shrink:0;}
+  }
+</style>
+</head>
+<body>
+
+<div class="dev-login" id="devLogin">
+  <div class="sticker outline" style="margin-bottom:16px;">Restricted</div>
+  <h1 style="font-size:1.6rem; margin-bottom:8px;">Dev Console</h1>
+  <p style="color:var(--bone-dim); font-size:0.85rem;">Developer/ops access only — separate credential from the business admin dashboard.</p>
+  <div class="field">
+    <label for="devKeyInput">Dev key</label>
+    <input id="devKeyInput" type="password" placeholder="Paste your DEV_API_KEY">
+  </div>
+  <button class="btn btn-primary" style="width:100%; justify-content:center; margin-top:18px;" onclick="ubDevLogin()">Enter</button>
+  <p class="dev-error" id="devError">That key was rejected. Check it matches DEV_API_KEY on the server.</p>
+</div>
+
+<div id="devConsole" style="display:none;">
+  <header class="dev-header">
+    <div class="wrap">
+      <div class="dev-title-row">
+        <h1>&gt; unbound_dev_console</h1>
+        <span class="dev-refresh" onclick="ubDevRefreshAll()">↻ refresh</span>
+      </div>
+    </div>
+  </header>
+
+  <div class="dev-wrap">
+    <nav class="dev-tabs">
+      <div class="dev-tab active" data-tab="system">System</div>
+      <div class="dev-tab" data-tab="webhooks">Webhooks</div>
+      <div class="dev-tab" data-tab="logs">Logs</div>
+      <div class="dev-tab" data-tab="performance">Performance</div>
+      <div class="dev-tab" data-tab="payments">Failed Payments</div>
+      <div class="dev-tab" data-tab="audit">Audit</div>
+      <div class="dev-tab" data-tab="security">Security &amp; Env</div>
+    </nav>
+
+    <!-- SYSTEM -->
+    <section class="dev-panel active" id="panel-system">
+      <div class="status-grid" id="systemGrid"></div>
+
+      <div class="dev-section">
+        <h3>Database Statistics</h3>
+        <div class="dev-table-wrap">
+          <table class="dev-table">
+            <thead><tr><th>Table</th><th>Rows</th></tr></thead>
+            <tbody id="dbStatsBody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="dev-section">
+        <h3>Backup Status</h3>
+        <div class="check-row" id="backupStatusRow"><div class="dot"></div><div></div></div>
+      </div>
+    </section>
+
+    <!-- WEBHOOKS -->
+    <section class="dev-panel" id="panel-webhooks">
+      <h3 style="margin-bottom:14px;">Payment Webhook Logs</h3>
+      <div class="dev-table-wrap">
+        <table class="dev-table">
+          <thead><tr><th>Event</th><th>Reference</th><th>Signature</th><th>Processed</th><th>Error</th><th>Time</th></tr></thead>
+          <tbody id="webhookLogsBody"></tbody>
+        </table>
+        <div class="dev-empty" id="webhookLogsEmpty" style="display:none;">No webhook attempts logged yet.</div>
+      </div>
+    </section>
+
+    <!-- LOGS -->
+    <section class="dev-panel" id="panel-logs">
+      <div class="dev-toolbar">
+        <select id="logLevelFilter">
+          <option value="">All levels</option>
+          <option value="info">Info</option>
+          <option value="warn">Warn</option>
+          <option value="error">Error</option>
+        </select>
+        <select id="logSourceFilter">
+          <option value="">All sources</option>
+          <option value="server">Server</option>
+          <option value="api">API</option>
+          <option value="webhook">Webhook</option>
+          <option value="db">DB</option>
+        </select>
+        <button class="btn btn-ghost" style="padding:8px 16px; font-size:0.72rem;" onclick="ubLoadLogs()">Filter</button>
+      </div>
+      <div class="dev-table-wrap">
+        <table class="dev-table">
+          <thead><tr><th>Level</th><th>Source</th><th>Message</th><th>Time</th></tr></thead>
+          <tbody id="logsBody"></tbody>
+        </table>
+        <div class="dev-empty" id="logsEmpty" style="display:none;">No logs yet.</div>
+      </div>
+
+      <div class="dev-section" style="margin-top:32px;">
+        <h3>Sentry Issues (Last 24h)</h3>
+        <div id="sentryBody"></div>
+      </div>
+    </section>
+
+    <!-- PERFORMANCE -->
+    <section class="dev-panel" id="panel-performance">
+      <div class="status-grid" id="perfGrid"></div>
+      <div class="dev-section">
+        <h3>By Route</h3>
+        <div class="dev-table-wrap">
+          <table class="dev-table">
+            <thead><tr><th>Route</th><th>Requests</th><th>Avg (ms)</th><th>Errors</th></tr></thead>
+            <tbody id="perfByRouteBody"></tbody>
+          </table>
+        </div>
+      </div>
+      <div class="dev-section">
+        <h3>Recent Failed API Requests</h3>
+        <div class="dev-table-wrap">
+          <table class="dev-table">
+            <thead><tr><th>Method</th><th>Path</th><th>Status</th><th>Duration</th><th>Time</th></tr></thead>
+            <tbody id="failedReqBody"></tbody>
+          </table>
+          <div class="dev-empty" id="failedReqEmpty" style="display:none;">No failed requests in the current window.</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- FAILED PAYMENTS -->
+    <section class="dev-panel" id="panel-payments">
+      <h3 style="margin-bottom:14px;">Failed Payments</h3>
+      <div class="dev-table-wrap">
+        <table class="dev-table">
+          <thead><tr><th>Reference</th><th>Customer</th><th>Amount</th><th>Created</th><th>Updated</th></tr></thead>
+          <tbody id="failedPaymentsBody"></tbody>
+        </table>
+        <div class="dev-empty" id="failedPaymentsEmpty" style="display:none;">No failed payments recorded.</div>
+      </div>
+    </section>
+
+    <!-- AUDIT -->
+    <section class="dev-panel" id="panel-audit">
+      <h3 style="margin-bottom:14px;">Audit Log</h3>
+      <div class="dev-table-wrap">
+        <table class="dev-table">
+          <thead><tr><th>Actor</th><th>Action</th><th>Target</th><th>Details</th><th>Time</th></tr></thead>
+          <tbody id="auditBody"></tbody>
+        </table>
+        <div class="dev-empty" id="auditEmpty" style="display:none;">No audit entries yet.</div>
+      </div>
+    </section>
+
+    <!-- SECURITY & ENV -->
+    <section class="dev-panel" id="panel-security">
+      <div class="dev-section">
+        <h3>Environment Variable Validation</h3>
+        <div class="check-list" id="envCheckList"></div>
+      </div>
+      <div class="dev-section">
+        <h3>Security Checks</h3>
+        <div class="check-list" id="securityCheckList"></div>
+      </div>
+      <div class="dev-section">
+        <h3>Deployment / Build Info</h3>
+        <div class="check-list" id="buildInfoList"></div>
+      </div>
+    </section>
+  </div>
+</div>
+
+<script src="config.js"></script>
+<script>
+  function ubDevKey(){ return sessionStorage.getItem('ub_dev_key'); }
+  function ubDate(d){ return new Date(d).toLocaleString(); }
+
+  async function ubDevApi(path){
+    const res = await fetch(`${UB_API_BASE}/api/dev${path}`, {
+      headers: { Authorization: `Bearer ${ubDevKey()}` },
+    });
+    const data = await res.json().catch(() => ({}));
+    if(!res.ok) throw new Error(data.error || 'Request failed');
+    return data;
+  }
+
+  async function ubDevLogin(){
+    const key = document.getElementById('devKeyInput').value.trim();
+    if(!key) return;
+    sessionStorage.setItem('ub_dev_key', key);
+    try{
+      await ubDevApi('/health');
+      document.getElementById('devLogin').style.display = 'none';
+      document.getElementById('devConsole').style.display = 'block';
+      ubDevRefreshAll();
+    }catch(e){
+      document.getElementById('devError').style.display = 'block';
+      sessionStorage.removeItem('ub_dev_key');
+    }
+  }
+
+  document.querySelectorAll('.dev-tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+      document.querySelectorAll('.dev-tab').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.dev-panel').forEach(p => p.classList.remove('active'));
+      tab.classList.add('active');
+      document.getElementById('panel-' + tab.dataset.tab).classList.add('active');
+    });
+  });
+
+  function ubDevRefreshAll(){
+    ubLoadSystem();
+    ubLoadWebhookLogs();
+    ubLoadLogs();
+    ubLoadSentry();
+    ubLoadPerformance();
+    ubLoadFailedPayments();
+    ubLoadAudit();
+    ubLoadSecurity();
+  }
+
+  /* ---------- SYSTEM ---------- */
+  async function ubLoadSystem(){
+    try{
+      const [health, dbStatus, dbStats] = await Promise.all([
+        ubDevApi('/health'), ubDevApi('/db/status'), ubDevApi('/db/stats'),
+      ]);
+
+      document.getElementById('systemGrid').innerHTML = `
+        <div class="status-card pass">
+          <div class="s-label">API Health</div><div class="s-value">OK</div>
+          <div class="s-sub">Uptime: ${Math.floor(health.uptimeSeconds/60)}m · Node ${health.nodeVersion}</div>
+        </div>
+        <div class="status-card ${dbStatus.connected ? 'pass' : 'fail'}">
+          <div class="s-label">Database</div><div class="s-value">${dbStatus.connected ? 'Connected' : 'Down'}</div>
+          <div class="s-sub">${dbStatus.connected ? `Latency ${dbStatus.latencyMs}ms · pool ${dbStatus.pool.total}/${dbStatus.pool.idle} idle` : dbStatus.error}</div>
+        </div>
+        <div class="status-card">
+          <div class="s-label">Memory (RSS)</div><div class="s-value">${health.memoryMb.rss} MB</div>
+          <div class="s-sub">Heap ${health.memoryMb.heapUsed}/${health.memoryMb.heapTotal} MB</div>
+        </div>
+        <div class="status-card">
+          <div class="s-label">DB Size</div><div class="s-value">${dbStats.databaseSizeMb != null ? dbStats.databaseSizeMb + ' MB' : '—'}</div>
+          <div class="s-sub">${health.env}</div>
+        </div>
+      `;
+
+      document.getElementById('dbStatsBody').innerHTML = Object.entries(dbStats.rowCounts).map(([table, count]) => `
+        <tr><td data-label="Table">${table}</td><td data-label="Rows">${count != null ? count : '—'}</td></tr>
+      `).join('');
+
+      const backup = await ubDevApi('/backup-status');
+      document.getElementById('backupStatusRow').innerHTML = `
+        <div class="dot" style="background:var(--static);"></div>
+        <div><div class="c-detail" style="max-width:640px;">${backup.note}</div></div>
+      `;
+    }catch(e){ console.error(e); }
+  }
+
+  /* ---------- WEBHOOKS ---------- */
+  async function ubLoadWebhookLogs(){
+    try{
+      const { logs } = await ubDevApi('/webhook-logs');
+      const body = document.getElementById('webhookLogsBody');
+      const empty = document.getElementById('webhookLogsEmpty');
+      if(logs.length === 0){ body.innerHTML = ''; empty.style.display = 'block'; return; }
+      empty.style.display = 'none';
+      body.innerHTML = logs.map(l => `
+        <tr>
+          <td data-label="Event">${l.event_type || '—'}</td>
+          <td data-label="Reference">${l.reference || '—'}</td>
+          <td data-label="Signature">${l.signature_valid ? '✓ valid' : '✗ invalid'}</td>
+          <td data-label="Processed">${l.processed_ok ? '✓' : '✗'}</td>
+          <td data-label="Error">${l.error_message || '—'}</td>
+          <td data-label="Time">${ubDate(l.created_at)}</td>
+        </tr>
+      `).join('');
+    }catch(e){ console.error(e); }
+  }
+
+  /* ---------- LOGS ---------- */
+  async function ubLoadLogs(){
+    const level = document.getElementById('logLevelFilter').value;
+    const source = document.getElementById('logSourceFilter').value;
+    try{
+      const { logs } = await ubDevApi(`/logs?level=${level}&source=${source}&limit=150`);
+      const body = document.getElementById('logsBody');
+      const empty = document.getElementById('logsEmpty');
+      if(logs.length === 0){ body.innerHTML = ''; empty.style.display = 'block'; return; }
+      empty.style.display = 'none';
+      body.innerHTML = logs.map(l => `
+        <tr>
+          <td data-label="Level"><span class="lvl ${l.level}">${l.level}</span></td>
+          <td data-label="Source">${l.source}</td>
+          <td data-label="Message">${l.message}</td>
+          <td data-label="Time">${ubDate(l.created_at)}</td>
+        </tr>
+      `).join('');
+    }catch(e){ console.error(e); }
+  }
+
+  async function ubLoadSentry(){
+    try{
+      const data = await ubDevApi('/sentry-issues');
+      const el = document.getElementById('sentryBody');
+      if(!data.configured){
+        el.innerHTML = `<p style="color:var(--static); font-size:0.8rem;">Sentry API not configured — set SENTRY_AUTH_TOKEN, SENTRY_ORG, and SENTRY_PROJECT to see issues here. Error capture (SENTRY_DSN) can still be active independently of this.</p>`;
+        return;
+      }
+      if(data.error){
+        el.innerHTML = `<p style="color:var(--bone-dim); font-size:0.8rem;">Could not reach Sentry: ${data.error}</p>`;
+        return;
+      }
+      el.innerHTML = data.issues.length
+        ? data.issues.map(i => `
+            <div class="check-row"><div class="dot" style="background:var(--bone);"></div>
+              <div><div class="c-name">${i.title}</div>
+              <div class="c-detail">${i.count} events · last seen ${ubDate(i.lastSeen)} · <a href="${i.permalink}" target="_blank" style="color:var(--bone); text-decoration:underline;">view in Sentry</a></div></div>
+            </div>
+          `).join('')
+        : '<p style="color:var(--static); font-size:0.8rem;">No issues in the last 24h.</p>';
+    }catch(e){ console.error(e); }
+  }
+
+  /* ---------- PERFORMANCE ---------- */
+  async function ubLoadPerformance(){
+    try{
+      const m = await ubDevApi('/metrics');
+      document.getElementById('perfGrid').innerHTML = `
+        <div class="status-card"><div class="s-label">Requests (window)</div><div class="s-value">${m.requestCount}</div></div>
+        <div class="status-card"><div class="s-label">Avg Response</div><div class="s-value">${m.avgResponseMs}ms</div></div>
+        <div class="status-card"><div class="s-label">p95 / p99</div><div class="s-value">${m.p95ResponseMs} / ${m.p99ResponseMs}ms</div></div>
+        <div class="status-card ${m.errorRate > 5 ? 'fail' : 'pass'}"><div class="s-label">Error Rate</div><div class="s-value">${m.errorRate}%</div></div>
+      `;
+      document.getElementById('perfByRouteBody').innerHTML = m.byRoute.map(r => `
+        <tr><td data-label="Route">${r.route}</td><td data-label="Requests">${r.count}</td><td data-label="Avg">${r.avgMs}ms</td><td data-label="Errors">${r.errors}</td></tr>
+      `).join('') || `<tr><td colspan="4" class="dev-empty">No requests recorded yet.</td></tr>`;
+
+      const { requests } = await ubDevApi('/failed-requests');
+      const body = document.getElementById('failedReqBody');
+      const empty = document.getElementById('failedReqEmpty');
+      if(requests.length === 0){ body.innerHTML = ''; empty.style.display = 'block'; }
+      else{
+        empty.style.display = 'none';
+        body.innerHTML = requests.map(r => `
+          <tr><td data-label="Method">${r.method}</td><td data-label="Path">${r.path}</td>
+              <td data-label="Status">${r.status}</td><td data-label="Duration">${r.durationMs}ms</td>
+              <td data-label="Time">${ubDate(r.at)}</td></tr>
+        `).join('');
+      }
+    }catch(e){ console.error(e); }
+  }
+
+  /* ---------- FAILED PAYMENTS ---------- */
+  async function ubLoadFailedPayments(){
+    try{
+      const { orders } = await ubDevApi('/failed-payments');
+      const body = document.getElementById('failedPaymentsBody');
+      const empty = document.getElementById('failedPaymentsEmpty');
+      if(orders.length === 0){ body.innerHTML = ''; empty.style.display = 'block'; return; }
+      empty.style.display = 'none';
+      body.innerHTML = orders.map(o => `
+        <tr>
+          <td data-label="Reference">${o.reference}</td>
+          <td data-label="Customer">${o.customerEmail}</td>
+          <td data-label="Amount">₦${(o.totalKobo/100).toLocaleString()}</td>
+          <td data-label="Created">${ubDate(o.createdAt)}</td>
+          <td data-label="Updated">${ubDate(o.updatedAt)}</td>
+        </tr>
+      `).join('');
+    }catch(e){ console.error(e); }
+  }
+
+  /* ---------- AUDIT ---------- */
+  async function ubLoadAudit(){
+    try{
+      const { logs } = await ubDevApi('/audit-logs');
+      const body = document.getElementById('auditBody');
+      const empty = document.getElementById('auditEmpty');
+      if(logs.length === 0){ body.innerHTML = ''; empty.style.display = 'block'; return; }
+      empty.style.display = 'none';
+      body.innerHTML = logs.map(l => `
+        <tr>
+          <td data-label="Actor">${l.actor}</td>
+          <td data-label="Action">${l.action}</td>
+          <td data-label="Target">${l.target_type || '—'} ${l.target_id ? '('+l.target_id.slice(0,8)+')' : ''}</td>
+          <td data-label="Details">${l.meta ? JSON.stringify(l.meta) : '—'}</td>
+          <td data-label="Time">${ubDate(l.created_at)}</td>
+        </tr>
+      `).join('');
+    }catch(e){ console.error(e); }
+  }
+
+  /* ---------- SECURITY & ENV ---------- */
+  async function ubLoadSecurity(){
+    try{
+      const env = await ubDevApi('/env-check');
+      document.getElementById('envCheckList').innerHTML = env.checks.map(c => `
+        <div class="check-row ${c.ok ? 'pass' : ''}">
+          <div class="dot"></div>
+          <div><div class="c-name">${c.name}${c.optional ? ' (optional)' : ''}</div><div class="c-detail">${c.ok ? '✓ ' : '✗ MISSING — '}${c.hint}</div></div>
+        </div>
+      `).join('');
+
+      const sec = await ubDevApi('/security-checks');
+      document.getElementById('securityCheckList').innerHTML = sec.checks.map(c => `
+        <div class="check-row ${c.pass ? 'pass' : ''}">
+          <div class="dot"></div>
+          <div><div class="c-name">${c.name}</div><div class="c-detail">${c.detail}</div></div>
+        </div>
+      `).join('');
+
+      const build = await ubDevApi('/build-info');
+      document.getElementById('buildInfoList').innerHTML = `
+        <div class="check-row pass"><div class="dot"></div><div><div class="c-name">Commit</div><div class="c-detail">${build.commit}</div></div></div>
+        <div class="check-row pass"><div class="dot"></div><div><div class="c-name">Environment</div><div class="c-detail">${build.environment} · Paystack ${build.paystackMode}</div></div></div>
+        <div class="check-row pass"><div class="dot"></div><div><div class="c-name">Node Version</div><div class="c-detail">${build.nodeVersion}</div></div></div>
+        <div class="check-row pass"><div class="dot"></div><div><div class="c-name">Started At</div><div class="c-detail">${ubDate(build.startedAt)}</div></div></div>
+      `;
+    }catch(e){ console.error(e); }
+  }
+
+  document.addEventListener('DOMContentLoaded', async () => {
+    if(ubDevKey()){
+      try{
+        await ubDevApi('/health');
+        document.getElementById('devLogin').style.display = 'none';
+        document.getElementById('devConsole').style.display = 'block';
+        ubDevRefreshAll();
+      }catch(e){ /* stay on login */ }
+    }
+  });
+</script>
+</body>
+</html>

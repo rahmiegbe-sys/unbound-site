@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Models — UNBOUND</title>
+<link rel="stylesheet" href="style.css">
+<style>
+  .models-hero{padding:120px 0 40px; text-align:center; position:relative; overflow:hidden;}
+  .models-hero h1{font-size:clamp(2.6rem, 6vw, 4.4rem);}
+  .models-hero p{color:var(--bone-dim); max-width:460px; margin:20px auto 0; font-size:1rem; line-height:1.6;}
+
+  /* ---------- featured real/illustrated look pairs ---------- */
+  .featured-looks{
+    display:grid; grid-template-columns:1fr 1fr; gap:24px;
+    padding:20px 0 60px;
+  }
+  .feature-look{
+    position:relative; aspect-ratio:3/4; overflow:hidden;
+    border:1px solid var(--line); cursor:pointer;
+    background:var(--ink-raised);
+  }
+  .feature-look img{
+    position:absolute; inset:0; width:100%; height:100%; object-fit:cover;
+    transition:opacity 0.6s ease, transform 1.2s cubic-bezier(.16,.8,.24,1);
+  }
+  .feature-look .img-real{ position:relative; opacity:1; z-index:1; }
+  .feature-look .img-illus{ opacity:0; z-index:2; }
+  .feature-look:hover .img-illus, .feature-look.flipped .img-illus{ opacity:1; }
+  .feature-look .look-info{
+    position:absolute; left:0; right:0; bottom:0; z-index:3; padding:22px;
+    background:linear-gradient(180deg, transparent, rgba(10,10,10,0.9) 70%);
+    pointer-events:none;
+  }
+  .feature-look .look-info .name{font-family:'Big Shoulders Display',sans-serif; font-weight:800; font-size:1.3rem; text-transform:uppercase;}
+  .feature-look .look-info .role{font-size:0.78rem; color:var(--bone-dim); margin-top:4px;}
+  .feature-look .flip-cue{
+    position:absolute; top:14px; right:14px; z-index:3;
+    font-size:0.64rem; letter-spacing:0.05em; text-transform:uppercase; font-weight:700;
+    background:var(--bone); color:var(--ink); padding:5px 10px;
+    opacity:0.92; pointer-events:none;
+  }
+  .feature-look .p-badge{
+    position:absolute; top:14px; left:14px; z-index:3;
+    font-size:0.64rem; letter-spacing:0.05em; text-transform:uppercase; font-weight:700;
+    border:1px solid var(--bone); color:var(--bone); padding:5px 10px;
+  }
+  @media (max-width:760px){ .featured-looks{grid-template-columns:1fr;} }
+
+  .lookbook-grid{
+    display:grid; grid-template-columns:repeat(3, 1fr); gap:22px;
+    padding:20px 0 130px;
+  }
+  .look-card{
+    position:relative; aspect-ratio:3/4; overflow:hidden;
+    border:1px solid var(--line);
+  }
+  .look-ph{
+    position:absolute; inset:0;
+    background:
+      linear-gradient(180deg, rgba(10,10,10,0) 40%, rgba(10,10,10,0.85) 100%),
+      linear-gradient(135deg, #1c1c19, #0e0e0c 60%);
+    display:flex; align-items:flex-end; padding:22px;
+  }
+  .look-ph::before{
+    content:'';
+    position:absolute; inset:0;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    opacity:0.07; mix-blend-mode:overlay;
+  }
+  .look-ph .silhouette{
+    position:absolute; left:50%; top:14%; bottom:20%; width:56%;
+    transform:translateX(-50%);
+    background:linear-gradient(180deg, rgba(237,234,226,0.10), rgba(237,234,226,0.03));
+    clip-path:polygon(38% 0%, 62% 0%, 70% 8%, 78% 26%, 70% 30%, 66% 60%, 74% 100%, 26% 100%, 34% 60%, 30% 30%, 22% 26%, 30% 8%);
+  }
+  .look-tag{position:relative; z-index:2;}
+  .look-tag .name{font-family:'Big Shoulders Display',sans-serif; font-weight:800; font-size:1.15rem; text-transform:uppercase;}
+  .look-tag .role{font-size:0.74rem; color:var(--static); letter-spacing:0.06em; text-transform:uppercase; margin-top:4px;}
+  .look-card .p-badge{
+    position:absolute; top:12px; left:12px; z-index:3;
+    font-size:0.66rem; letter-spacing:0.06em; text-transform:uppercase; font-weight:700;
+    border:1px solid var(--bone); color:var(--bone); padding:5px 10px;
+  }
+  @media (max-width:900px){ .lookbook-grid{grid-template-columns:repeat(2,1fr);} }
+  @media (max-width:600px){ .lookbook-grid{grid-template-columns:1fr;} }
+
+  .cta-note{
+    text-align:center; padding:0 0 110px;
+    color:var(--static); font-size:0.85rem;
+  }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="wrap">
+    <a href="index.html" class="logo-mark"><img src="assets/logo.png" alt="Unbound"></a>
+    <div class="navlinks">
+      <a href="index.html">Home</a>
+      <a href="shop.html">Shop</a>
+      <a href="models.html" class="active">Models</a>
+      <a href="about.html">About</a>
+      <a href="contact.html">Contact</a>
+    </div>
+    <button class="cart-btn" onclick="ubOpenCart()">Cart <span class="cart-count">0</span></button>
+  </div>
+</nav>
+
+<div class="cart-overlay" id="cartOverlay" onclick="ubCloseCart()"></div>
+<div class="cart-drawer" id="cartDrawer">
+  <div class="cart-head">
+    <h3>Your Cart</h3>
+    <button class="cart-close" onclick="ubCloseCart()" aria-label="Close cart">&times;</button>
+  </div>
+  <div class="cart-items" id="cartItems"></div>
+  <div class="cart-foot" id="cartFoot">
+    <div class="cart-subtotal"><span>Subtotal</span><span id="cartSubtotal">₦0</span></div>
+    <p class="cart-note">Some pieces are still awaiting final pricing — confirmed at checkout. Shipping calculated next step.</p>
+    <a href="checkout.html" class="btn btn-primary">Checkout</a>
+  </div>
+</div>
+
+<section class="models-hero reveal in">
+  <div class="halftone-bg"></div>
+  <div class="wrap">
+    <div class="sticker spin" style="margin-bottom:20px;">First Shoot</div>
+    <h1>On The Street</h1>
+    <p>From sketch to garment — the first real frames of Drop 001 on the Unbound crew. Hover a look to see where it started.</p>
+  </div>
+</section>
+
+<section class="wrap">
+  <div class="featured-looks">
+
+    <div class="feature-look reveal" onclick="this.classList.toggle('flipped')">
+      <span class="p-badge">Drop 001</span>
+      <span class="flip-cue">Hover: Concept Art</span>
+      <img class="img-real" src="assets/look-front-real.jpg" alt="Model wearing Unbound black tee, front view">
+      <img class="img-illus" src="assets/look-front-illustrated.jpg" alt="Illustrated concept art of Unbound tee, front view">
+      <div class="look-info">
+        <div class="name">Look 01 — Front</div>
+        <div class="role">Bondage Tee — Black</div>
+      </div>
+    </div>
+
+    <div class="feature-look reveal" onclick="this.classList.toggle('flipped')">
+      <span class="p-badge">Drop 001</span>
+      <span class="flip-cue">Hover: Concept Art</span>
+      <img class="img-real" src="assets/look-back-real.jpg" alt="Model wearing Unbound black tee, back graffiti print">
+      <img class="img-illus" src="assets/look-back-illustrated.jpg" alt="Illustrated concept art of Unbound tee, back graffiti print">
+      <div class="look-info">
+        <div class="name">Look 02 — Back</div>
+        <div class="role">Bondage Tee — Black</div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<section class="wrap">
+  <div class="section-head" style="margin-bottom:0;">
+    <h2 class="split-target" style="font-size:clamp(1.8rem,3.5vw,2.6rem);">More Looks Coming Soon</h2>
+    <p>The rest of the lookbook is shooting now.</p>
+  </div>
+</section>
+
+<section class="wrap">
+  <div class="lookbook-grid">
+
+    <div class="look-card reveal">
+      <span class="p-badge">Drop 001</span>
+      <div class="look-ph"><div class="silhouette"></div>
+        <div class="look-tag"><div class="name">Look 03</div><div class="role">Unbound Hoodie — Black</div></div>
+      </div>
+    </div>
+
+    <div class="look-card reveal">
+      <span class="p-badge">Drop 001</span>
+      <div class="look-ph"><div class="silhouette"></div>
+        <div class="look-tag"><div class="name">Look 04</div><div class="role">Unbound Hoodie — Grey</div></div>
+      </div>
+    </div>
+
+    <div class="look-card reveal">
+      <span class="p-badge">New Drop</span>
+      <div class="look-ph"><div class="silhouette"></div>
+        <div class="look-tag"><div class="name">Look 05</div><div class="role">Unbound Shorts</div></div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<p class="cta-note">Want to model for Unbound? <a href="contact.html" style="color:var(--bone); text-decoration:underline;">Reach out</a>.</p>
+
+<footer>
+  <div class="wrap">
+    <div class="fgrid">
+      <div class="col">
+        <div class="logo-mark" style="margin-bottom:16px;"><img src="assets/logo.png" alt="Unbound"></div>
+        <p style="color:var(--bone-dim); font-size:0.85rem; max-width:220px; line-height:1.6;">Streetwear made for the ones who don't ask permission.</p>
+      </div>
+      <div class="col">
+        <h4>Shop</h4>
+        <a href="shop.html">Drop 001</a>
+        <a href="shop.html">Hoodies</a>
+      </div>
+      <div class="col">
+        <h4>Company</h4>
+        <a href="about.html">About</a>
+        <a href="models.html">Models</a>
+        <a href="contact.html">Contact</a>
+      </div>
+    </div>
+    <div class="bottom">
+      <span>© 2026 Unbound.</span>
+      <span>Freedom is to create.</span>
+    </div>
+  </div>
+</footer>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+<script src="cart.js"></script>
+</body>
+</html>

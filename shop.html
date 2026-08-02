@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Shop — UNBOUND</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<nav>
+  <div class="wrap">
+    <a href="index.html" class="logo-mark"><img src="assets/logo.png" alt="Unbound"></a>
+    <div class="navlinks">
+      <a href="index.html">Home</a>
+      <a href="shop.html" class="active">Shop</a>
+      <a href="models.html">Models</a>
+      <a href="about.html">About</a>
+      <a href="contact.html">Contact</a>
+    </div>
+    <button class="cart-btn" onclick="ubOpenCart()">Cart <span class="cart-count">0</span></button>
+  </div>
+</nav>
+
+<div class="cart-overlay" id="cartOverlay" onclick="ubCloseCart()"></div>
+<div class="cart-drawer" id="cartDrawer">
+  <div class="cart-head">
+    <h3>Your Cart</h3>
+    <button class="cart-close" onclick="ubCloseCart()" aria-label="Close cart">&times;</button>
+  </div>
+  <div class="cart-items" id="cartItems"></div>
+  <div class="cart-foot" id="cartFoot">
+    <div class="cart-subtotal"><span>Subtotal</span><span id="cartSubtotal">₦0</span></div>
+    <p class="cart-note">Some pieces are still awaiting final pricing — confirmed at checkout. Shipping calculated next step.</p>
+    <a href="checkout.html" class="btn btn-primary">Checkout</a>
+  </div>
+</div>
+
+<section class="shop-hero reveal in">
+  <div class="wrap">
+    <h1>The Shop</h1>
+    <p>Every piece is limited. Drop 001 is live — once a size sells out, it's gone until the next run.</p>
+  </div>
+</section>
+
+<section class="wrap">
+  <div class="product-grid">
+
+    <div class="p-card reveal">
+      <div class="p-shot">
+        <span class="p-badge">Drop 001</span>
+        <img src="assets/hoodie-unbound.png" alt="Unbound black hoodie, front and back print">
+      </div>
+      <div class="p-body">
+        <h3>The Unbound Hoodie — Black</h3>
+        <div class="p-price tbd">Price to be announced</div>
+        <p class="p-desc">Heavyweight fleece, boxy fit. Front reads the name in cracked gothic type, back falls into the warning label.</p>
+        <button class="p-add" disabled>Coming Soon</button>
+      </div>
+    </div>
+
+    <div class="p-card reveal">
+      <div class="p-shot">
+        <span class="p-badge">Drop 001</span>
+        <img src="assets/hoodie-grey.png" alt="Unbound grey hoodie, front and back print">
+      </div>
+      <div class="p-body">
+        <h3>The Unbound Hoodie — Grey</h3>
+        <div class="p-price tbd">Price to be announced</div>
+        <p class="p-desc">Same build as the black run in heather grey. "Freedom to create" stitched under the hood, cracked wordmark up front.</p>
+        <button class="p-add" disabled>Coming Soon</button>
+      </div>
+    </div>
+
+    <div class="p-card reveal">
+      <div class="p-shot">
+        <span class="p-badge">Drop 001</span>
+        <img src="assets/tee-black.png" alt="Unbound black bondage graphic tee">
+      </div>
+      <div class="p-body">
+        <h3>Bondage Tee — Black</h3>
+        <div class="p-price">₦15,000</div>
+        <p class="p-desc">Back graffiti graphic, front wordmark with a quiet manifesto line under the collar. 220gsm cotton, boxy fit.</p>
+        <div class="size-select" role="radiogroup" aria-label="Select size">
+          <button type="button" class="size-opt active" data-size="S">S</button>
+          <button type="button" class="size-opt" data-size="M">M</button>
+          <button type="button" class="size-opt" data-size="L">L</button>
+          <button type="button" class="size-opt" data-size="XL">XL</button>
+          <button type="button" class="size-opt" data-size="XXL">XXL</button>
+        </div>
+        <button class="p-add" data-id="tee-black" data-name="Bondage Tee — Black" data-price="15000" data-img="assets/tee-black.png">Add to Cart</button>
+      </div>
+    </div>
+
+    <div class="p-card reveal">
+      <div class="p-shot">
+        <span class="p-badge">Drop 001</span>
+        <img src="assets/tee-white.png" alt="Unbound white bondage graphic tee">
+      </div>
+      <div class="p-body">
+        <h3>Bondage Tee — White</h3>
+        <div class="p-price">₦15,000</div>
+        <p class="p-desc">Same graphic, off-white base. The one that shows every print detail sharpest.</p>
+        <div class="size-select" role="radiogroup" aria-label="Select size">
+          <button type="button" class="size-opt active" data-size="S">S</button>
+          <button type="button" class="size-opt" data-size="M">M</button>
+          <button type="button" class="size-opt" data-size="L">L</button>
+          <button type="button" class="size-opt" data-size="XL">XL</button>
+          <button type="button" class="size-opt" data-size="XXL">XXL</button>
+        </div>
+        <button class="p-add" data-id="tee-white" data-name="Bondage Tee — White" data-price="15000" data-img="assets/tee-white.png">Add to Cart</button>
+      </div>
+    </div>
+
+    <div class="p-card reveal">
+      <div class="p-shot">
+        <span class="p-badge">New Drop</span>
+        <img src="assets/shorts-white.jpg" alt="Unbound shorts, white colorway">
+      </div>
+      <div class="p-body">
+        <h3>The Unbound Shorts</h3>
+        <div class="p-price tbd">Price to be announced</div>
+        <p class="p-desc">Heavyweight fleece, arched wordmark, manifesto stitched at the hem. Available in White, Cream, Green, Blue, Black.</p>
+        <button class="p-add" disabled>Coming Soon</button>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <div class="fgrid">
+      <div class="col">
+        <div class="logo-mark" style="margin-bottom:16px;"><img src="assets/logo.png" alt="Unbound"></div>
+        <p style="color:var(--bone-dim); font-size:0.85rem; max-width:220px; line-height:1.6;">Streetwear made for the ones who don't ask permission.</p>
+      </div>
+      <div class="col">
+        <h4>Shop</h4>
+        <a href="shop.html">Drop 001</a>
+        <a href="shop.html">Hoodies</a>
+      </div>
+      <div class="col">
+        <h4>Company</h4>
+        <a href="about.html">About</a>
+        <a href="models.html">Models</a>
+        <a href="contact.html">Contact</a>
+      </div>
+    </div>
+    <div class="bottom">
+      <span>© 2026 Unbound.</span>
+      <span>Freedom is to create.</span>
+    </div>
+  </div>
+</footer>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+<script src="cart.js"></script>
+<script>
+  // size selector: one active size per card, defaults to the first option
+  document.querySelectorAll('.p-card').forEach(card => {
+    const sizeBtns = card.querySelectorAll('.size-opt');
+    sizeBtns.forEach(btn => {
+      btn.addEventListener('click', () => {
+        sizeBtns.forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+      });
+    });
+  });
+
+  document.querySelectorAll('.p-add[data-id]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const card = btn.closest('.p-card');
+      const activeSize = card.querySelector('.size-opt.active');
+      const size = activeSize ? activeSize.dataset.size : null;
+
+      ubAddToCart({
+        id: btn.dataset.id,
+        name: btn.dataset.name,
+        price: Number(btn.dataset.price),
+        img: btn.dataset.img,
+        size: size,
+      });
+      const original = btn.textContent;
+      btn.textContent = size ? `Added (${size}) ✓` : 'Added ✓';
+      btn.classList.add('added');
+      if(window.gsap){
+        gsap.fromTo(btn, {scale:1}, {scale:1.04, duration:0.15, ease:'power2.out', yoyo:true, repeat:1});
+      }
+      setTimeout(() => { btn.textContent = original; btn.classList.remove('added'); }, 1400);
+    });
+  });
+</script>
+</body>
+</html>

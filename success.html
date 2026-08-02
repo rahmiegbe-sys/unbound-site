@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Order Confirmation — UNBOUND</title>
+<link rel="stylesheet" href="style.css">
+<style>
+  .confirm-wrap{padding:100px 0 130px; min-height:60vh;}
+  .confirm-state{max-width:560px; margin:0 auto; text-align:center;}
+  .confirm-loading{color:var(--bone-dim); font-size:0.95rem;}
+  .confirm-stamp{
+    display:inline-block; border:2px solid var(--bone); color:var(--bone);
+    padding:8px 20px; font-family:'Big Shoulders Display',sans-serif; font-weight:800;
+    font-size:1.6rem; letter-spacing:0.04em; text-transform:uppercase;
+    transform:rotate(-4deg); margin-bottom:24px;
+  }
+  .confirm-stamp.fail{border-color:var(--static); color:var(--static);}
+  .confirm-card{
+    border:1px solid var(--line); background:var(--ink-raised);
+    padding:28px; text-align:left; margin-top:24px;
+  }
+  .confirm-row{display:flex; justify-content:space-between; gap:14px; padding:9px 0; border-bottom:1px solid var(--line); font-size:0.9rem;}
+  .confirm-row:last-child{border-bottom:none;}
+  .confirm-row span:first-child{color:var(--static);}
+  .confirm-row span:last-child{color:var(--bone); text-align:right;}
+  .confirm-row.total{font-weight:700; font-size:1.05rem; padding-top:16px;}
+  .confirm-items{margin-top:6px; margin-bottom:10px;}
+  .confirm-item-line{display:flex; justify-content:space-between; font-size:0.85rem; color:var(--bone-dim); padding:4px 0;}
+  .confirm-actions{margin-top:28px; display:flex; gap:14px; justify-content:center; flex-wrap:wrap;}
+</style>
+</head>
+<body>
+
+<div class="corner-logo"><img src="assets/logo.png" alt="Unbound logo"></div>
+
+<nav>
+  <div class="wrap">
+    <a href="index.html" class="logo-mark"><img src="assets/logo.png" alt="Unbound"></a>
+    <div class="navlinks">
+      <a href="index.html">Home</a>
+      <a href="shop.html">Shop</a>
+      <a href="models.html">Models</a>
+      <a href="about.html">About</a>
+      <a href="contact.html">Contact</a>
+    </div>
+    <button class="cart-btn" onclick="ubOpenCart()">Cart <span class="cart-count">0</span></button>
+  </div>
+</nav>
+
+<div class="cart-overlay" id="cartOverlay" onclick="ubCloseCart()"></div>
+<div class="cart-drawer" id="cartDrawer">
+  <div class="cart-head">
+    <h3>Your Cart</h3>
+    <button class="cart-close" onclick="ubCloseCart()" aria-label="Close cart">&times;</button>
+  </div>
+  <div class="cart-items" id="cartItems"></div>
+  <div class="cart-foot" id="cartFoot">
+    <div class="cart-subtotal"><span>Subtotal</span><span id="cartSubtotal">₦0</span></div>
+    <a href="checkout.html" class="btn btn-primary">Checkout</a>
+  </div>
+</div>
+
+<section class="confirm-wrap">
+  <div class="wrap confirm-state" id="confirmState">
+    <p class="confirm-loading">Confirming your payment...</p>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <div class="bottom">
+      <span>© 2026 Unbound.</span>
+      <span>Freedom is to create.</span>
+    </div>
+  </div>
+</footer>
+
+<script src="config.js"></script>
+<script src="cart.js"></script>
+<script>
+  function ubFmtNaira(n){
+    return '₦' + Number(n).toLocaleString('en-NG');
+  }
+
+  async function ubVerifyOrder(){
+    const params = new URLSearchParams(window.location.search);
+    const ref = params.get('ref') || params.get('reference') || params.get('trxref');
+    const state = document.getElementById('confirmState');
+
+    if(!ref){
+      state.innerHTML = `<div class="confirm-stamp fail">No Order Found</div><p class="confirm-loading">We couldn't find an order reference in this link. If you just placed an order, check your email or contact us with your reference number.</p>`;
+      return;
+    }
+
+    try{
+      const res = await fetch(`${UB_API_BASE}/api/checkout/verify/${encodeURIComponent(ref)}`);
+      const data = await res.json();
+
+      if(!res.ok){
+        state.innerHTML = `
+          <div class="confirm-stamp fail">Payment Not Confirmed</div>
+          <p class="confirm-loading">${data.error || 'This payment could not be verified.'}</p>
+          <div class="confirm-actions">
+            <a href="checkout.html" class="btn btn-primary">Try Again</a>
+            <a href="contact.html" class="btn btn-ghost">Contact Us</a>
+          </div>
+        `;
+        return;
+      }
+
+      const order = data.order;
+      const itemsHtml = order.items.map(i => `
+        <div class="confirm-item-line"><span>${i.name} × ${i.qty}</span><span>${ubFmtNaira(i.lineTotal / 100)}</span></div>
+      `).join('');
+
+      state.innerHTML = `
+        <div class="confirm-stamp">Order Confirmed</div>
+        <p class="confirm-loading">Thanks — your payment went through. A confirmation has been logged under order <b style="color:var(--bone);">${order.reference}</b>.</p>
+        <div class="confirm-card">
+          <div class="confirm-items">${itemsHtml}</div>
+          <div class="confirm-row"><span>Subtotal</span><span>${ubFmtNaira(order.subtotal)}</span></div>
+          <div class="confirm-row"><span>Delivery — ${order.deliveryZoneName}</span><span>${ubFmtNaira(order.shippingFee)}</span></div>
+          <div class="confirm-row total"><span>Total Paid</span><span>${ubFmtNaira(order.total)}</span></div>
+          <div class="confirm-row"><span>Delivering to</span><span>${order.deliveryAddress}</span></div>
+        </div>
+        <div class="confirm-actions">
+          <a href="shop.html" class="btn btn-primary">Keep Shopping</a>
+        </div>
+      `;
+
+      // clear the cart now that payment is genuinely confirmed
+      ubSaveCart([]);
+      ubRenderCartCount();
+    }catch(err){
+      state.innerHTML = `<div class="confirm-stamp fail">Something Went Wrong</div><p class="confirm-loading">Could not reach the server to confirm your payment. If you were charged, contact us with your reference and we'll sort it out.</p>`;
+    }
+  }
+
+  document.addEventListener('DOMContentLoaded', ubVerifyOrder);
+</script>
+</body>
+</html>
